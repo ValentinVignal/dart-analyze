@@ -1,2 +1,3 @@
 # dart-analyze
-analyzes the changed lines of a dart pull request
+
+Analyzes the changed dart lined of a pull request.
