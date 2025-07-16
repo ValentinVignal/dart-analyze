@@ -18,5 +18,6 @@
     "declaration": true,
     "declarationMap": true,
     "lib": ["es2022"]
-  }
+  },
+  "include": ["src/**/*"]
 }
