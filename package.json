@@ -1,6 +1,6 @@
 {
   "name": "dart-analyze",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Analyzes the changed lines of a dart pull request",
   "keywords": [
     "analyze",
@@ -36,6 +36,8 @@
     "test": "vitest run",
     "dev": "vitest",
     "local-release": "changeset version && changeset publish",
-    "prepublishOnly": "npm run ci"
+    "prepublishOnly": "npm run ci",
+    "changeset": "changeset",
+    "x": "changeset version"
   }
 }
