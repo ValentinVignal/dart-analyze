@@ -33,7 +33,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ${{ github.workspace }}
-      - run: ls coverage
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
