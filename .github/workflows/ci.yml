@@ -27,3 +27,7 @@ jobs:
 
       - name: Run CI
         run: npm run ci
+
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
