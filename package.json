@@ -24,6 +24,7 @@
   "license": "MIT",
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
+    "@types/js-yaml": "^4.0.9",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
@@ -38,5 +39,11 @@
     "ci": "npm run build && npm run check-format && npm run test",
     "prepublishOnly": "npm run ci",
     "publish": "changeset publish"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "js-yaml": "^4.1.0",
+    "minimatch": "^10.0.3"
   }
 }
