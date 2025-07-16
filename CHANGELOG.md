@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.1.0
+
+### Minor Changes
+
+- 42b1fb6: Add analyzer action
+
 ## 0.0.2
 
 ### Patch Changes
