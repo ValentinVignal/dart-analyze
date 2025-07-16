@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.1.1
+
+### Patch Changes
+
+- 7eae56b: Add FailOnEnum to export
+
 ## 0.1.0
 
 ### Minor Changes
