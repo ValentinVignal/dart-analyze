@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.2.0
+
+### Minor Changes
+
+- f487cb1: Use the github action parameter if provided and not overridden
+
 ## 0.1.2
 
 ### Patch Changes
