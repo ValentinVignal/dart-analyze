@@ -15,12 +15,14 @@ describe('ActionOptions', () => {
     process.env.GITHUB_WORKSPACE = '/github/workspace';
 
     // Mock path.resolve to return predictable results
-    vi.mocked(path.resolve).mockImplementation((base, relative) => {
-      if (relative === './') {
-        return '/github/workspace';
-      }
-      return `${base}/${relative}`;
-    });
+    vi.spyOn(path, 'resolve').mockImplementation(
+      (base: string, relative: string) => {
+        if (relative === './') {
+          return '/github/workspace';
+        }
+        return `${base}/${relative}`;
+      },
+    );
   });
 
   afterEach(() => {
@@ -41,14 +43,14 @@ describe('ActionOptions', () => {
 
       expect(result).toEqual({
         failOn: FailOnEnum.Warning,
-        workingDirectory: '/github/workspace',
+        workingDirectory: '/github/workspace/',
         token: 'test-token',
         checkRenamedFiles: false,
         emojis: true,
         format: true,
-        lineLength: undefined,
-        analyzerLines: undefined,
-        formatLines: undefined,
+        lineLength: null,
+        analyzerLines: [],
+        formatLines: [],
       });
     });
 
@@ -99,7 +101,7 @@ describe('ActionOptions', () => {
 
       const result = applyDefaults(options);
 
-      expect(result.lineLength).toBe(undefined);
+      expect(result.lineLength).toBe(null);
     });
 
     it('should resolve working directory with default path', () => {
@@ -109,7 +111,7 @@ describe('ActionOptions', () => {
 
       applyDefaults(options);
 
-      expect(path.resolve).toHaveBeenCalledWith('/github/workspace', './');
+      expect(path.resolve).toHaveBeenCalledWith('/github/workspace', '');
     });
 
     it('should resolve working directory with custom path', () => {
@@ -168,7 +170,7 @@ describe('ActionOptions', () => {
 
       const result = applyDefaults(options);
 
-      expect(result.lineLength).toBe(0);
+      expect(result.lineLength).toBe(null);
     });
 
     it('should handle very large lineLength', () => {
@@ -189,7 +191,9 @@ describe('ActionOptions', () => {
       };
 
       // Mock path.resolve to handle complex paths
-      vi.mocked(path.resolve).mockReturnValue('/github/parent/child/subdir');
+      const resolveSpy = vi
+        .spyOn(path, 'resolve')
+        .mockReturnValue('/github/parent/child/subdir');
 
       const result = applyDefaults(options);
 
