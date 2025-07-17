@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.1.2
+
+### Patch Changes
+
+- 4cf2c29: Add documentation
+
 ## 0.1.1
 
 ### Patch Changes
