@@ -3,7 +3,7 @@ import * as exec from '@actions/exec';
 import { FailOnEnum } from '../utils/FailOn.js';
 import { IgnoredFiles } from '../utils/IgnoredFiles.js';
 import { ModifiedFiles } from '../utils/ModifiedFiles.js';
-import { format } from './Format.js';
+import { format } from './format.js';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 
 describe('Format', () => {

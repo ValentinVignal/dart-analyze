@@ -5,7 +5,7 @@ import {
   DartAnalyzeLogTypeEnum,
 } from '../analyze/DartAnalyzeLogType.js';
 import { FormatResult } from '../format/FormatResult.js';
-import { comment } from '../utils/Comment.js';
+import { comment } from '../utils/comment.js';
 import { FailOnEnum } from '../utils/FailOn.js';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 

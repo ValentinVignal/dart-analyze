@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import { analyze } from './analyze/analyze.js';
-import { format } from './format/Format.js';
+import { format } from './format/format.js';
 import { Result } from './result/Result.js';
 import { IgnoredFiles } from './utils/IgnoredFiles.js';
 import { ModifiedFiles } from './utils/ModifiedFiles.js';

@@ -35,7 +35,7 @@ export interface ModifiedFileInterface {
 /**
  * A modified file
  */
-class ModifiedFile {
+export class ModifiedFile {
   /**
    * The file name from the root directory (`'lib/src/...'`).
    */
