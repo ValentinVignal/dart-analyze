@@ -1,6 +1,5 @@
 import path from 'path';
 import { FailOn, FailOnEnum } from './FailOn.js';
-import type { PartiallyPartial } from './types.js';
 import { getInputSafe } from './getInput.js';
 
 /**
