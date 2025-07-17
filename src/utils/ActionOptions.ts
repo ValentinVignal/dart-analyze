@@ -81,7 +81,7 @@ export const applyDefaults = (options: ActionOptions): ActionOptionsSafe => ({
     process.env.GITHUB_WORKSPACE!,
     options.workingDirectory ?? getInputSafe('working-directory') ?? './',
   ),
-  token: options.token ?? getInputSafe('token', { required: true }),
+  token: options.token || getInputSafe('token'),
   checkRenamedFiles:
     options.checkRenamedFiles ?? getInputSafe('check-renamed-files') === 'true',
   emojis: options.emojis ?? (getInputSafe('emojis') || 'true') === 'true',
