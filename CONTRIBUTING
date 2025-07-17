@@ -1,0 +1,10 @@
+# Contributing
+
+We use changesets to manage GitHub releases and versioning.
+
+- Run `npm run changeset` to start the process.
+- Provide a release description; this will appear in the package changelog.
+- Confirm with 'y'. A markdown file will be created in the `.changeset` directory.
+- Open a pull request with your changes, including the changeset file, and have it reviewed and merged.
+- After merging, a follow-up PR will be created automatically with generated changelogs and version updates.
+- Approve and merge this PR to publish the new version to the GitHub package registry.
