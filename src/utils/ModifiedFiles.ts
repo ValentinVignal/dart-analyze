@@ -40,7 +40,6 @@ export class ModifiedFile {
    * The file name from the root directory (`'lib/src/...'`).
    */
   readonly name: string;
-  readonly deletions: FileLines[];
   readonly additions: FileLines[];
 
   constructor(
@@ -49,7 +48,6 @@ export class ModifiedFile {
   ) {
     this.name = file.filename;
     this.additions = [];
-    this.deletions = [];
 
     this.parsePatch(file.patch);
   }
@@ -67,7 +65,6 @@ export class ModifiedFile {
         // patch is usually like " -6,7 +6,8"
         try {
           const hasAddition = patch.includes('+');
-          const hasDeletion = patch.includes('-');
           if (hasAddition) {
             const lines = patch
               .match(/\+.*/)![0]
@@ -76,20 +73,6 @@ export class ModifiedFile {
               .split(',')
               .map((num) => parseInt(num)) as [number, number];
             this.additions.push(
-              new FileLines({
-                start: lines[0],
-                end: lines[0] + lines[1],
-              }),
-            );
-          }
-          if (hasDeletion) {
-            const lines = patch
-              .split('+')[0]!
-              .trim()
-              .slice(1)
-              .split(',')
-              .map((num) => parseInt(num)) as [number, number];
-            this.deletions.push(
               new FileLines({
                 start: lines[0],
                 end: lines[0] + lines[1],
@@ -160,12 +143,21 @@ export class ModifiedFiles {
   private async init(): Promise<void> {
     const files = await this.getGithubFiles();
     for (const file of files) {
-      this.files.set(
-        path.join(process.env.GITHUB_WORKSPACE!, file.filename),
-        new ModifiedFile(file, this.actionOptions),
-      );
       const modifiedFile = new ModifiedFile(file, this.actionOptions);
-      this.files.set(modifiedFile.name, modifiedFile);
+      const githubWorkspace = process.env.GITHUB_WORKSPACE!;
+      const paths = [file.filename, path.join(githubWorkspace, file.filename)];
+      const githubActionWorkspaceRoot = '/home/runner/work/';
+      if (githubWorkspace.startsWith(githubActionWorkspaceRoot)) {
+        paths.push(
+          path.join(
+            githubWorkspace.replace(githubActionWorkspaceRoot, '/__w/'),
+            file.filename,
+          ),
+        );
+      }
+      for (const filePath of paths) {
+        this.files.set(filePath, modifiedFile);
+      }
     }
     this._resolveInit(true);
   }
