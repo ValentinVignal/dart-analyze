@@ -1,6 +1,7 @@
 import path from 'path';
-import { FailOnEnum } from './FailOn.js';
+import { FailOn, FailOnEnum } from './FailOn.js';
 import type { PartiallyPartial } from './types.js';
+import { getInputSafe } from './getInput.js';
 
 /**
  * Contains all the options of the action.
@@ -67,15 +68,7 @@ export type ActionOptionsSafe = {
 /**
  * Contains all the options of the action.
  */
-export type ActionOptions = PartiallyPartial<
-  ActionOptionsSafe,
-  | 'failOn'
-  | 'workingDirectory'
-  | 'checkRenamedFiles'
-  | 'emojis'
-  | 'format'
-  | 'lineLength'
->;
+export type ActionOptions = Partial<ActionOptionsSafe>;
 
 /**
  * Applies the default values to the action options.
@@ -84,16 +77,22 @@ export type ActionOptions = PartiallyPartial<
  * @returns
  */
 export const applyDefaults = (options: ActionOptions): ActionOptionsSafe => ({
-  failOn: options.failOn ?? FailOnEnum.Warning,
+  failOn: options.failOn ?? FailOn.fromInput(getInputSafe('fail-on')),
   workingDirectory: path.resolve(
     process.env.GITHUB_WORKSPACE!,
-    options.workingDirectory ?? './',
+    options.workingDirectory ?? getInputSafe('working-directory') ?? './',
   ),
-  token: options.token,
-  checkRenamedFiles: options.checkRenamedFiles ?? false,
-  emojis: options.emojis ?? true,
-  format: options.format ?? true,
-  lineLength: options.lineLength,
-  analyzerLines: options.analyzerLines,
-  formatLines: options.formatLines,
+  token: options.token ?? getInputSafe('token', { required: true }),
+  checkRenamedFiles:
+    options.checkRenamedFiles ?? getInputSafe('check-renamed-files') === 'true',
+  emojis: options.emojis ?? (getInputSafe('emojis') || 'true') === 'true',
+  format: options.format ?? (getInputSafe('format') || 'true') === 'true',
+  lineLength:
+    options.lineLength || parseInt(getInputSafe('line-length')) || null,
+  analyzerLines:
+    options.analyzerLines ??
+    getInputSafe('analyzer-lines').split('\n').filter(Boolean),
+  formatLines:
+    options.formatLines ??
+    getInputSafe('format-lines').split('\n').filter(Boolean),
 });
