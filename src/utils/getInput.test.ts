@@ -1,51 +1,70 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as core from '@actions/core';
 import { getInputSafe } from './getInput.js';
 
-describe('getInput', () => {
-  let processEnv: NodeJS.ProcessEnv;
+describe('getInputSafe', () => {
+  let getInputSpy: ReturnType<typeof vi.spyOn> & {
+    mockImplementation: any;
+    mockRestore: any;
+  };
 
   beforeEach(() => {
-    processEnv = process.env;
+    getInputSpy = vi.spyOn(core, 'getInput') as any;
   });
 
   afterEach(() => {
-    process.env = processEnv;
+    getInputSpy.mockRestore();
+    vi.resetAllMocks();
   });
 
-  describe('with "-" in the name', () => {
-    it('should return empty string if there is no value', () => {
-      const value = getInputSafe('fail-on');
-      expect(value).toBe('');
-    });
-
-    it('should return the value set by the bash script', () => {
-      process.env.INPUT_FAIL_ON = 'warning';
-      const value = getInputSafe('fail-on');
-      expect(value).toBe('warning');
-    });
-
-    it('should return the value set by github action', () => {
-      process.env['INPUT_FAIL-ON'] = 'warning';
-      const value = getInputSafe('fail-on');
-      expect(value).toBe('warning');
-    });
+  it('returns value for direct input name', () => {
+    getInputSpy.mockImplementation((name: string) =>
+      name === 'emojis' ? 'true' : '',
+    );
+    expect(getInputSafe('emojis')).toBe('true');
   });
 
-  describe('without "-" in the name', () => {
-    it('should return empty string if there is no value', () => {
-      const value = getInputSafe('emojis');
-      expect(value).toBe('');
-    });
+  it('returns value for dash input from github action', () => {
+    getInputSpy.mockImplementation((name: string) =>
+      name === 'fail-on' ? 'warning' : '',
+    );
+    expect(getInputSafe('fail-on')).toBe('warning');
+  });
 
-    it('should throw an error if there is no value and it is required', () => {
-      const f = () => getInputSafe('token', { required: true });
-      expect(f).toThrowError();
+  it('returns value for dash input from bash script fallback', () => {
+    getInputSpy.mockImplementation((name: string) => {
+      if (name === 'fail-on') return '';
+      if (name === 'fail_on') return 'info';
+      return '';
     });
+    expect(getInputSafe('fail-on')).toBe('info');
+  });
 
-    it('should throw an error if there is no value and it is required', () => {
-      process.env.INPUT_TOKEN = 'token';
-      const value = getInputSafe('token', { required: true });
-      expect(value).toBe('token');
+  it('throws if required and not supplied (no dash)', () => {
+    getInputSpy.mockImplementation(() => '');
+    expect(() => getInputSafe('token', { required: true })).toThrowError(
+      'Input required and not supplied: token',
+    );
+  });
+
+  it('throws if required and not supplied (with dash)', () => {
+    getInputSpy.mockImplementation(() => '');
+    expect(() => getInputSafe('fail-on', { required: true })).toThrowError(
+      'Input required and not supplied: fail-on',
+    );
+  });
+
+  it('returns empty string if not required and not supplied', () => {
+    getInputSpy.mockImplementation(() => '');
+    expect(getInputSafe('not-set')).toBe('');
+  });
+
+  it('returns value for fallback with required', () => {
+    getInputSpy.mockImplementation((name: string) => {
+      if (name === 'fail-on') return '';
+      if (name === 'fail_on') return 'format';
+      return '';
     });
+    expect(getInputSafe('fail-on', { required: true })).toBe('format');
   });
 });

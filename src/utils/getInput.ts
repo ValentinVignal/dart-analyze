@@ -11,10 +11,20 @@ export const getInputSafe = (
   name: string,
   options?: core.InputOptions,
 ): string => {
-  const value = core.getInput(name, options);
+  let value = core.getInput(name, { ...options, required: false });
 
   if (value || !name.includes('-')) {
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
     return value;
   }
-  return core.getInput(name.replace(/-/g, '_'), options);
+  value = core.getInput(name.replace(/-/g, '_'), {
+    ...options,
+    required: false,
+  });
+  if (options?.required && !value) {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  return value;
 };
