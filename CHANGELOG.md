@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.3.1
+
+### Patch Changes
+
+- ad8b060: Fix a bug where the analyzer and formatter where never run
+
 ## 0.3.0
 
 ### Minor Changes
