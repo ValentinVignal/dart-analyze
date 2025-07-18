@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.2.2
+
+### Patch Changes
+
+- 3f8620b: Support \_\_w github action workspace root
+
 ## 0.2.1
 
 ### Patch Changes
