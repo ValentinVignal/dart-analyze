@@ -62,6 +62,7 @@ export async function analyze(params: {
     if (!line.includes(delimiter)) {
       continue;
     }
+    console.log('analyze()', 'line.includes(delimiter)');
     try {
       const parsedLine = new ParsedLine(
         {

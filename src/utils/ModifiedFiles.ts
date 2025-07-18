@@ -109,6 +109,14 @@ export class ModifiedFile {
         }),
       );
     }
+    console.log('ModifiedFile.parsePatch()', 'this.additions');
+    console.log(
+      this.additions.map((line) => ({ start: line.start, end: line.end })),
+    );
+    console.log('ModifiedFile.parsePatch()', 'this.deletions');
+    console.log(
+      this.deletions.map((line) => ({ start: line.start, end: line.end })),
+    );
   }
 
   /**
