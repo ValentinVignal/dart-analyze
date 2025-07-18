@@ -159,6 +159,8 @@ export class ModifiedFiles {
    */
   private async init(): Promise<void> {
     const files = await this.getGithubFiles();
+    console.log('Github files');
+    console.log(files);
     for (const file of files) {
       this.files.set(
         path.join(process.env.GITHUB_WORKSPACE!, file.filename),
@@ -167,6 +169,8 @@ export class ModifiedFiles {
       const modifiedFile = new ModifiedFile(file, this.actionOptions);
       this.files.set(modifiedFile.name, modifiedFile);
     }
+    console.log('Modified files');
+    console.log(this.files);
     this._resolveInit(true);
   }
 
