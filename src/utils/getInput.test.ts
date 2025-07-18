@@ -1,70 +1,86 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as core from '@actions/core';
-import { getInputSafe } from './getInput.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import {
+  getInputString,
+  getInputNumber,
+  getInputMultilineString,
+} from './getInput.js';
 
-describe('getInputSafe', () => {
-  let getInputSpy: ReturnType<typeof vi.spyOn> & {
-    mockImplementation: any;
-    mockRestore: any;
-  };
-
+describe('getInputString', () => {
+  const OLD_ENV = process.env;
   beforeEach(() => {
-    getInputSpy = vi.spyOn(core, 'getInput') as any;
+    process.env = { ...OLD_ENV };
   });
-
   afterEach(() => {
-    getInputSpy.mockRestore();
-    vi.resetAllMocks();
+    process.env = OLD_ENV;
   });
 
-  it('returns value for direct input name', () => {
-    getInputSpy.mockImplementation((name: string) =>
-      name === 'emojis' ? 'true' : '',
-    );
-    expect(getInputSafe('emojis')).toBe('true');
+  it('returns undefined if input is not set', () => {
+    delete process.env.INPUT_FOO;
+    expect(getInputString('foo')).toBeUndefined();
   });
 
-  it('returns value for dash input from github action', () => {
-    getInputSpy.mockImplementation((name: string) =>
-      name === 'fail-on' ? 'warning' : '',
-    );
-    expect(getInputSafe('fail-on')).toBe('warning');
+  it('returns value for direct input', () => {
+    process.env.INPUT_BAR = 'baz';
+    expect(getInputString('bar')).toBe('baz');
   });
 
-  it('returns value for dash input from bash script fallback', () => {
-    getInputSpy.mockImplementation((name: string) => {
-      if (name === 'fail-on') return '';
-      if (name === 'fail_on') return 'info';
-      return '';
-    });
-    expect(getInputSafe('fail-on')).toBe('info');
+  it('returns value for dash/underscore fallback', () => {
+    process.env.INPUT_FAIL_ON = 'warning';
+    expect(getInputString('fail-on')).toBe('warning');
   });
 
-  it('throws if required and not supplied (no dash)', () => {
-    getInputSpy.mockImplementation(() => '');
-    expect(() => getInputSafe('token', { required: true })).toThrowError(
-      'Input required and not supplied: token',
-    );
+  it('trims whitespace', () => {
+    process.env.INPUT_BAR = '  spaced  ';
+    expect(getInputString('bar')).toBe('spaced');
+  });
+});
+
+describe('getInputNumber', () => {
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    process.env = { ...OLD_ENV };
+  });
+  afterEach(() => {
+    process.env = OLD_ENV;
   });
 
-  it('throws if required and not supplied (with dash)', () => {
-    getInputSpy.mockImplementation(() => '');
-    expect(() => getInputSafe('fail-on', { required: true })).toThrowError(
-      'Input required and not supplied: fail-on',
-    );
+  it('returns undefined if input is not set', () => {
+    delete process.env.INPUT_NUM;
+    expect(getInputNumber('num')).toBeUndefined();
   });
 
-  it('returns empty string if not required and not supplied', () => {
-    getInputSpy.mockImplementation(() => '');
-    expect(getInputSafe('not-set')).toBe('');
+  it('parses integer value', () => {
+    process.env.INPUT_NUM = '42';
+    expect(getInputNumber('num')).toBe(42);
   });
 
-  it('returns value for fallback with required', () => {
-    getInputSpy.mockImplementation((name: string) => {
-      if (name === 'fail-on') return '';
-      if (name === 'fail_on') return 'format';
-      return '';
-    });
-    expect(getInputSafe('fail-on', { required: true })).toBe('format');
+  it('parses value with whitespace', () => {
+    process.env.INPUT_NUM = '  7  ';
+    expect(getInputNumber('num')).toBe(7);
+  });
+});
+
+describe('getInputMultilineString', () => {
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    process.env = { ...OLD_ENV };
+  });
+  afterEach(() => {
+    process.env = OLD_ENV;
+  });
+
+  it('returns undefined if input is not set', () => {
+    delete process.env.INPUT_MULTI;
+    expect(getInputMultilineString('multi')).toBeUndefined();
+  });
+
+  it('splits lines and trims', () => {
+    process.env.INPUT_MULTI = 'foo\n bar \n\nbaz\n';
+    expect(getInputMultilineString('multi')).toEqual(['foo', 'bar', 'baz']);
+  });
+
+  it('handles single line', () => {
+    process.env.INPUT_MULTI = 'single';
+    expect(getInputMultilineString('multi')).toEqual(['single']);
   });
 });

@@ -1,287 +1,103 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import path from 'path';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { applyDefaults } from './ActionOptions.js';
 import { FailOnEnum } from './FailOn.js';
-import type { ActionOptions, ActionOptionsSafe } from './ActionOptions.js';
 
-// Mock path module
-vi.mock('path');
-
-describe('ActionOptions', () => {
-  const originalWorkspace = process.env.GITHUB_WORKSPACE;
-
+describe('applyDefaults', () => {
+  const OLD_ENV = process.env;
   beforeEach(() => {
-    vi.resetAllMocks();
-    process.env.GITHUB_WORKSPACE = '/github/workspace';
-
-    // Mock path.resolve to return predictable results
-    vi.spyOn(path, 'resolve').mockImplementation(
-      (base: string, relative: string) => {
-        if (relative === './') {
-          return '/github/workspace';
-        }
-        return `${base}/${relative}`;
-      },
-    );
+    process.env = { ...OLD_ENV };
   });
-
   afterEach(() => {
-    if (originalWorkspace !== undefined) {
-      process.env.GITHUB_WORKSPACE = originalWorkspace;
-    } else {
-      delete process.env.GITHUB_WORKSPACE;
-    }
+    process.env = OLD_ENV;
   });
 
-  describe('applyDefaults function', () => {
-    it('should apply default values to minimal options', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result).toEqual({
-        failOn: FailOnEnum.Warning,
-        workingDirectory: '/github/workspace/',
-        token: 'test-token',
-        checkRenamedFiles: false,
-        emojis: true,
-        format: true,
-        lineLength: null,
-        analyzerLines: [],
-        formatLines: [],
-      });
-    });
-
-    it('should preserve provided values over defaults', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        failOn: FailOnEnum.Error,
-        workingDirectory: 'custom/path',
-        checkRenamedFiles: true,
-        emojis: false,
-        format: false,
-        lineLength: 120,
-        analyzerLines: ['line1', 'line2'],
-        formatLines: ['file1.dart', 'file2.dart'],
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result).toEqual({
-        failOn: FailOnEnum.Error,
-        workingDirectory: '/github/workspace/custom/path',
-        token: 'test-token',
-        checkRenamedFiles: true,
-        emojis: false,
-        format: false,
-        lineLength: 120,
-        analyzerLines: ['line1', 'line2'],
-        formatLines: ['file1.dart', 'file2.dart'],
-      });
-    });
-
-    it('should handle null lineLength', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        lineLength: null,
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result.lineLength).toBe(null);
-    });
-
-    it('should handle undefined lineLength', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        lineLength: undefined,
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result.lineLength).toBe(null);
-    });
-
-    it('should resolve working directory with default path', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-      };
-
-      applyDefaults(options);
-
-      expect(path.resolve).toHaveBeenCalledWith('/github/workspace', '');
-    });
-
-    it('should resolve working directory with custom path', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        workingDirectory: 'src/dart',
-      };
-
-      applyDefaults(options);
-
-      expect(path.resolve).toHaveBeenCalledWith(
-        '/github/workspace',
-        'src/dart',
-      );
-    });
-
-    it('should handle all FailOnEnum values', () => {
-      const testCases = [
-        FailOnEnum.Error,
-        FailOnEnum.Warning,
-        FailOnEnum.Info,
-        FailOnEnum.Format,
-        FailOnEnum.Nothing,
-      ];
-
-      testCases.forEach((failOn) => {
-        const options: ActionOptions = {
-          token: 'test-token',
-          failOn,
-        };
-
-        const result = applyDefaults(options);
-
-        expect(result.failOn).toBe(failOn);
-      });
-    });
-
-    it('should handle empty arrays for analyzerLines and formatLines', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        analyzerLines: [],
-        formatLines: [],
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result.analyzerLines).toEqual([]);
-      expect(result.formatLines).toEqual([]);
-    });
-
-    it('should handle zero lineLength', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        lineLength: 0,
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result.lineLength).toBe(null);
-    });
-
-    it('should handle very large lineLength', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        lineLength: 9999,
-      };
-
-      const result = applyDefaults(options);
-
-      expect(result.lineLength).toBe(9999);
-    });
-
-    it('should handle complex working directory paths', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        workingDirectory: '../parent/child/subdir',
-      };
-
-      // Mock path.resolve to handle complex paths
-      const resolveSpy = vi
-        .spyOn(path, 'resolve')
-        .mockReturnValue('/github/parent/child/subdir');
-
-      const result = applyDefaults(options);
-
-      expect(result.workingDirectory).toBe('/github/parent/child/subdir');
-      expect(path.resolve).toHaveBeenCalledWith(
-        '/github/workspace',
-        '../parent/child/subdir',
-      );
-    });
-
-    it('should maintain type safety for ActionOptionsSafe', () => {
-      const options: ActionOptions = {
-        token: 'test-token',
-        failOn: FailOnEnum.Info,
-        emojis: false,
-        format: true,
-      };
-
-      const result: ActionOptionsSafe = applyDefaults(options);
-
-      // Type checks - these should not cause TypeScript errors
-      expect(typeof result.failOn).toBe('number');
-      expect(typeof result.workingDirectory).toBe('string');
-      expect(typeof result.token).toBe('string');
-      expect(typeof result.emojis).toBe('boolean');
-      expect(typeof result.format).toBe('boolean');
-    });
-
-    it('should handle partial options correctly', () => {
-      // Test that ActionOptions can have partial properties
-      const minimalOptions: ActionOptions = {
-        token: 'required-token',
-      };
-
-      const partialOptions: ActionOptions = {
-        token: 'partial-token',
-        emojis: false,
-        format: false,
-      };
-
-      const fullOptions: ActionOptions = {
-        token: 'full-token',
-        failOn: FailOnEnum.Nothing,
-        workingDirectory: 'custom',
-        checkRenamedFiles: true,
-        emojis: true,
-        format: true,
-        lineLength: 100,
-        analyzerLines: ['analyze1'],
-        formatLines: ['format1'],
-      };
-
-      expect(() => applyDefaults(minimalOptions)).not.toThrow();
-      expect(() => applyDefaults(partialOptions)).not.toThrow();
-      expect(() => applyDefaults(fullOptions)).not.toThrow();
-    });
+  it('throws if token is missing', () => {
+    delete process.env.INPUT_TOKEN;
+    expect(() => applyDefaults()).toThrow('The token is required');
   });
 
-  describe('Type definitions', () => {
-    it('should ensure ActionOptionsSafe has all required properties', () => {
-      const safeOptions: ActionOptionsSafe = {
-        failOn: FailOnEnum.Warning,
-        workingDirectory: '/test',
-        token: 'token',
-        emojis: true,
-        format: true,
-      };
+  it('uses token from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.token).toBe('abc');
+  });
 
-      // These properties should be accessible without TypeScript errors
-      expect(safeOptions.failOn).toBeDefined();
-      expect(safeOptions.workingDirectory).toBeDefined();
-      expect(safeOptions.token).toBeDefined();
-      expect(safeOptions.emojis).toBeDefined();
-      expect(safeOptions.format).toBeDefined();
+  it('uses failOn from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'info';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.failOn).toBe(FailOnEnum.Info);
+  });
+
+  it('uses workingDirectory from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_WORKING_DIRECTORY = 'src';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.workingDirectory).toMatch(/\/ws/);
+  });
+
+  it('uses checkRenamedFiles from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_CHECK_RENAMED_FILES = 'true';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.checkRenamedFiles).toBe(true);
+  });
+
+  it('uses emojis and format from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_EMOJIS = 'false';
+    process.env.INPUT_FORMAT = 'false';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.emojis).toBe(false);
+    expect(result.format).toBe(false);
+  });
+
+  it('uses lineLength from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_LINE_LENGTH = '120';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.lineLength).toBe(120);
+  });
+
+  it('uses analyzerLines and formatLines from env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_ANALYZER_LINES = 'foo\nbar';
+    process.env.INPUT_FORMAT_LINES = 'baz\nqux';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults();
+    expect(result.analyzerLines).toEqual(['foo', 'bar']);
+    expect(result.formatLines).toEqual(['baz', 'qux']);
+  });
+
+  it('prefers options over env', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'warning';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    const result = applyDefaults({
+      token: 'xyz',
+      failOn: FailOnEnum.Error,
+      workingDirectory: 'custom',
+      checkRenamedFiles: true,
+      emojis: false,
+      format: false,
+      lineLength: 77,
+      analyzerLines: ['a'],
+      formatLines: ['b'],
     });
-
-    it('should ensure ActionOptions allows partial properties', () => {
-      // These should all be valid ActionOptions
-      const option1: ActionOptions = { token: 'test' };
-      const option2: ActionOptions = { token: 'test', emojis: false };
-      const option3: ActionOptions = {
-        token: 'test',
-        failOn: FailOnEnum.Error,
-      };
-
-      expect(option1.token).toBe('test');
-      expect(option2.token).toBe('test');
-      expect(option3.token).toBe('test');
-    });
+    expect(result.token).toBe('xyz');
+    expect(result.failOn).toBe(FailOnEnum.Error);
+    expect(result.workingDirectory).toMatch(/custom/);
+    expect(result.checkRenamedFiles).toBe(true);
+    expect(result.emojis).toBe(false);
+    expect(result.format).toBe(false);
+    expect(result.lineLength).toBe(77);
+    expect(result.analyzerLines).toEqual(['a']);
+    expect(result.formatLines).toEqual(['b']);
   });
 });
