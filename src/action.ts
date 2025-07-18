@@ -40,9 +40,7 @@ export async function run(options: ActionOptions): Promise<void> {
       optionsWithDefaults,
     );
 
-    if (!result.success) {
-      await result.comment();
-    }
+    await result.comment();
     result.log();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

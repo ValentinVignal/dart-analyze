@@ -360,5 +360,113 @@ describe('Comment', () => {
         body: '<!-- dart-analyze -->\nTest message with\nnew lines',
       });
     });
+
+    it('should not create a comment if there is no message and not existing comment', async () => {
+      // Mock pull request context
+      Object.defineProperty(github.context, 'payload', {
+        value: {
+          pull_request: {
+            number: 123,
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock context from utils
+      Object.defineProperty(context, 'payload', {
+        value: {
+          pull_request: {
+            number: 123,
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock no existing comments
+      mockOctokit.rest.issues.listComments.mockResolvedValue({
+        data: [],
+      });
+
+      mockOctokit.rest.issues.createComment.mockResolvedValue({
+        data: { id: 456 },
+      });
+
+      await comment({}, mockActionOptions);
+
+      expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+      });
+
+      expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+
+      expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
+    });
+
+    it('should update an existing comment to say the issues have been resolved', async () => {
+      // Mock pull request context
+      Object.defineProperty(github.context, 'payload', {
+        value: {
+          pull_request: {
+            number: 123,
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock context from utils
+      Object.defineProperty(context, 'payload', {
+        value: {
+          pull_request: {
+            number: 123,
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock existing comment with dart-analyze identifier
+      mockOctokit.rest.issues.listComments.mockResolvedValue({
+        data: [
+          {
+            id: 789,
+            body: '<!-- dart-analyze -->\nOld message',
+          },
+          {
+            id: 790,
+            body: 'Some other comment',
+          },
+        ],
+      });
+
+      mockOctokit.rest.issues.updateComment.mockResolvedValue({
+        data: { id: 789 },
+      });
+
+      const actionOptions: Partial<ActionOptionsSafe> = {
+        token: 'test-token',
+        emojis: true,
+      };
+      await comment({}, actionOptions as ActionOptionsSafe);
+
+      expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+      });
+
+      expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        comment_id: 789,
+        body: '<!-- dart-analyze -->\n**Dart analyze** completed successfully\n:white_check_mark: All issues have been resolved.',
+      });
+
+      expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+    });
   });
 });
