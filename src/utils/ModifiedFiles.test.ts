@@ -54,7 +54,7 @@ describe('ModifiedFiles', () => {
 
     realEnv = process.env;
     // Mock environment variables
-    process.env.GITHUB_WORKSPACE = '/github/workspace';
+    process.env.GITHUB_WORKSPACE = '/home/runner/work/repo/repo';
 
     // Mock github context
     vi.mocked(github.context).eventName = 'pull_request';
@@ -85,7 +85,7 @@ describe('ModifiedFiles', () => {
 
     vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
 
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    // vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -301,16 +301,20 @@ describe('ModifiedFiles', () => {
         const modifiedFiles = new ModifiedFiles(mockActionOptions);
         await modifiedFiles.isInit;
 
-        expect(modifiedFiles.files.size).toBe(6); // 2 entries per file (absolute path + relative path)
-        expect(modifiedFiles.has('/github/workspace/lib/test1.dart')).toBe(
-          true,
-        );
-        expect(modifiedFiles.has('/github/workspace/lib/test2.dart')).toBe(
-          true,
-        );
-        expect(modifiedFiles.has('/github/workspace/lib/test3.dart')).toBe(
-          true,
-        );
+        expect(modifiedFiles.files.size).toBe(9); // 3 entries per file (absolute path + relative path + __w path)
+        console.log(modifiedFiles.files);
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test1.dart'),
+        ).toBe(true);
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test2.dart'),
+        ).toBe(true);
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test3.dart'),
+        ).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test1.dart')).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test2.dart')).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test3.dart')).toBe(true);
         expect(modifiedFiles.has('lib/test1.dart')).toBe(true);
         expect(modifiedFiles.has('lib/test2.dart')).toBe(true);
         expect(modifiedFiles.has('lib/test3.dart')).toBe(true);
@@ -421,15 +425,21 @@ describe('ModifiedFiles', () => {
         const modifiedFiles = new ModifiedFiles(mockActionOptions);
         await modifiedFiles.isInit;
 
-        expect(modifiedFiles.has('/github/workspace/lib/test1.dart')).toBe(
-          true,
-        );
-        expect(modifiedFiles.has('/github/workspace/lib/test2.dart')).toBe(
-          true,
-        );
-        expect(modifiedFiles.has('/github/workspace/lib/test3.dart')).toBe(
-          true,
-        );
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test1.dart'),
+        ).toBe(true);
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test2.dart'),
+        ).toBe(true);
+        expect(
+          modifiedFiles.has('/home/runner/work/repo/repo/lib/test3.dart'),
+        ).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test1.dart')).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test2.dart')).toBe(true);
+        expect(modifiedFiles.has('/__w/repo/repo/lib/test3.dart')).toBe(true);
+        expect(modifiedFiles.has('lib/test1.dart')).toBe(true);
+        expect(modifiedFiles.has('lib/test2.dart')).toBe(true);
+        expect(modifiedFiles.has('lib/test3.dart')).toBe(true);
       });
 
       it('should return false for non-existing files', async () => {
