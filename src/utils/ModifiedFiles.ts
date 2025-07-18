@@ -154,12 +154,21 @@ export class ModifiedFiles {
 
       console.log('ModifiedFiles.init()', 'context', context);
       console.log('ModifiedFiles.init()', 'github.context', github.context);
-      this.files.set(
-        path.join(process.env.GITHUB_WORKSPACE!, file.filename),
-        new ModifiedFile(file, this.actionOptions),
-      );
       const modifiedFile = new ModifiedFile(file, this.actionOptions);
-      this.files.set(modifiedFile.name, modifiedFile);
+      const githubWorkspace = process.env.GITHUB_WORKSPACE!;
+      const paths = [file.filename, path.join(githubWorkspace, file.filename)];
+      const githubActionWorkspaceRoot = '/home/runner/work/';
+      if (githubWorkspace.startsWith(githubActionWorkspaceRoot)) {
+        paths.push(
+          path.join(
+            githubWorkspace.replace(githubActionWorkspaceRoot, '/__w/'),
+            file.filename,
+          ),
+        );
+      }
+      for (const filePath of paths) {
+        this.files.set(filePath, modifiedFile);
+      }
     }
     console.log('ModifiedFiles.init()', 'this.files');
     console.log(this.files);
