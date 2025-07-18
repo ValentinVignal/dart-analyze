@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.3.0
+
+### Minor Changes
+
+- 3845a6b: Resolve the comment when everything is fixed
+
 ## 0.2.2
 
 ### Patch Changes
