@@ -2,9 +2,21 @@ import * as github from '@actions/github';
 import { context } from '@actions/github/lib/utils.js';
 import type { ActionOptionsSafe } from './ActionOptions.js';
 
+/**
+ * Post a comment on the pull request with the given message.
+ *
+ * Attempts the update an existing comment if it finds one, otherwise creates a new comment.
+ *
+ * If {@link message} is not provided, it will
+ * - do nothing if there is no existing comment,
+ * - or update the existing comment with a resolved message.
+ */
+
 export async function comment(
-  params: {
-    message: string;
+  {
+    message,
+  }: {
+    message?: string;
   },
   actionOptions: ActionOptionsSafe,
 ): Promise<void> {
@@ -28,7 +40,7 @@ export async function comment(
       comment.body?.includes(COMMENT_IDENTIFIER),
     );
 
-    const messageWithIdentifier = `${COMMENT_IDENTIFIER}\n${params.message}`;
+    const messageWithIdentifier = `${COMMENT_IDENTIFIER}\n${message ?? successMessage(actionOptions)}`;
 
     if (existingComment) {
       // Update existing comment
@@ -37,7 +49,7 @@ export async function comment(
         comment_id: existingComment.id,
         body: messageWithIdentifier,
       });
-    } else {
+    } else if (message) {
       // Create new comment
       await octokit.rest.issues.createComment({
         ...github.context.repo,
@@ -46,6 +58,11 @@ export async function comment(
       });
     }
   } catch (error) {
-    console.log(`Couldn't comment "${params.message}"`);
+    console.log(`Couldn't comment "${message}"`);
   }
 }
+
+const successMessage = (actionOptions: ActionOptionsSafe): string => {
+  const icon = actionOptions.emojis ? ':white_check_mark: ' : '';
+  return `**Dart analyze** completed successfully\n${icon}All issues have been resolved.`;
+};

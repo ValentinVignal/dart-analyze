@@ -48,16 +48,20 @@ export class Result {
   public async comment(): Promise<void> {
     const messages: string[] = [this.issueCountMessage({ emojis: true })];
 
-    const analyzeBody = this.analyze.commentBody;
-    if (analyzeBody) {
-      messages.push(analyzeBody);
-    }
-    const formatBody = this.format.commentBody;
-    if (formatBody) {
-      messages.push(formatBody);
-    }
+    if (this.success) {
+      await comment({}, this.actionOptions);
+    } else {
+      const analyzeBody = this.analyze.commentBody;
+      if (analyzeBody) {
+        messages.push(analyzeBody);
+      }
+      const formatBody = this.format.commentBody;
+      if (formatBody) {
+        messages.push(formatBody);
+      }
 
-    await comment({ message: messages.join('\n---\n') }, this.actionOptions);
+      await comment({ message: messages.join('\n---\n') }, this.actionOptions);
+    }
   }
 
   /**
