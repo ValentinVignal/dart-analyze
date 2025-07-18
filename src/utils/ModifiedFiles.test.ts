@@ -85,7 +85,7 @@ describe('ModifiedFiles', () => {
 
     vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
 
-    // vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -302,7 +302,6 @@ describe('ModifiedFiles', () => {
         await modifiedFiles.isInit;
 
         expect(modifiedFiles.files.size).toBe(9); // 3 entries per file (absolute path + relative path + __w path)
-        console.log(modifiedFiles.files);
         expect(
           modifiedFiles.has('/home/runner/work/repo/repo/lib/test1.dart'),
         ).toBe(true);

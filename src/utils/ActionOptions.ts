@@ -1,6 +1,10 @@
 import path from 'path';
 import { FailOn, FailOnEnum } from './FailOn.js';
-import { getInputSafe } from './getInput.js';
+import {
+  getInputMultilineString,
+  getInputNumber,
+  getInputString,
+} from './getInput.js';
 
 /**
  * Contains all the options of the action.
@@ -75,23 +79,27 @@ export type ActionOptions = Partial<ActionOptionsSafe>;
  * @param options
  * @returns
  */
-export const applyDefaults = (options: ActionOptions): ActionOptionsSafe => ({
-  failOn: options.failOn ?? FailOn.fromInput(getInputSafe('fail-on')),
-  workingDirectory: path.resolve(
-    process.env.GITHUB_WORKSPACE!,
-    options.workingDirectory ?? getInputSafe('working-directory') ?? './',
-  ),
-  token: options.token || getInputSafe('token'),
-  checkRenamedFiles:
-    options.checkRenamedFiles ?? getInputSafe('check-renamed-files') === 'true',
-  emojis: options.emojis ?? (getInputSafe('emojis') || 'true') === 'true',
-  format: options.format ?? (getInputSafe('format') || 'true') === 'true',
-  lineLength:
-    options.lineLength || parseInt(getInputSafe('line-length')) || null,
-  analyzerLines:
-    options.analyzerLines ??
-    getInputSafe('analyzer-lines').split('\n').filter(Boolean),
-  formatLines:
-    options.formatLines ??
-    getInputSafe('format-lines').split('\n').filter(Boolean),
-});
+export const applyDefaults = (options?: ActionOptions): ActionOptionsSafe => {
+  const token = options?.token || getInputString('token');
+  if (!token) {
+    throw new Error('The token is required');
+  }
+  return {
+    failOn: options?.failOn ?? FailOn.fromInput(getInputString('fail-on')),
+    workingDirectory: path.resolve(
+      process.env.GITHUB_WORKSPACE!,
+      options?.workingDirectory ?? getInputString('working-directory') ?? './',
+    ),
+    token,
+    checkRenamedFiles:
+      options?.checkRenamedFiles ??
+      getInputString('check-renamed-files') === 'true',
+    emojis: options?.emojis ?? (getInputString('emojis') || 'true') === 'true',
+    format: options?.format ?? (getInputString('format') || 'true') === 'true',
+    lineLength: options?.lineLength ?? getInputNumber('line-length'),
+    analyzerLines:
+      options?.analyzerLines ?? getInputMultilineString('analyzer-lines'),
+    formatLines:
+      options?.formatLines ?? getInputMultilineString('format-lines'),
+  };
+};

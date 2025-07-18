@@ -9,7 +9,7 @@ import { applyDefaults, type ActionOptions } from './utils/ActionOptions.js';
 /**
  * Run the action
  */
-export async function run(options: ActionOptions): Promise<void> {
+export async function run(options?: ActionOptions): Promise<void> {
   try {
     const optionsWithDefaults = applyDefaults(options);
 

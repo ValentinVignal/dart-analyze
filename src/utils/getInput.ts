@@ -1,30 +1,39 @@
-import * as core from '@actions/core';
+/**
+ *  Get the input as a string from the environment variables.
+ */
+export const getInputString = (name: string): string | undefined => {
+  const names = [name, name.replace(/-/g, '_')].map(
+    (name) => `INPUT_${name.toUpperCase()}`,
+  );
+  for (const envName of names) {
+    const value = process.env[envName];
+    if (value !== undefined) {
+      return value.trim();
+    }
+  }
+};
 
 /**
- *
- * Used to get the input from the action. Using the action from the market place
- * with set environment variables like `INPUT_FAIL-ON`, but using the shell
- * script will set environment variable like `INPUT_FAIL_ON`. This function
- * returns the value of the input, no matter how it was set.
+ * Get the input as a number from the environment variables.
  */
-export const getInputSafe = (
-  name: string,
-  options?: core.InputOptions,
-): string => {
-  let value = core.getInput(name, { ...options, required: false });
+export const getInputNumber = (name: string): number | undefined => {
+  const value = getInputString(name);
+  if (value === undefined) {
+    return undefined;
+  }
+  return parseInt(value);
+};
 
-  if (value || !name.includes('-')) {
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value;
+/**
+ * Get the input as a multiline string from the environment variables.
+ */
+export const getInputMultilineString = (name: string): string[] | undefined => {
+  const value = getInputString(name);
+  if (value === undefined) {
+    return undefined;
   }
-  value = core.getInput(name.replace(/-/g, '_'), {
-    ...options,
-    required: false,
-  });
-  if (options?.required && !value) {
-    throw new Error(`Input required and not supplied: ${name}`);
-  }
-  return value;
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
 };
