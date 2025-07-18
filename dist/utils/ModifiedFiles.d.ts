@@ -25,7 +25,6 @@ export declare class ModifiedFile {
      * The file name from the root directory (`'lib/src/...'`).
      */
     readonly name: string;
-    readonly deletions: FileLines[];
     readonly additions: FileLines[];
     constructor(file: {
         filename: string;

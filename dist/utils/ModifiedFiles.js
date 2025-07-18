@@ -25,13 +25,11 @@ export class ModifiedFile {
      * The file name from the root directory (`'lib/src/...'`).
      */
     name;
-    deletions;
     additions;
     constructor(file, actionOptions) {
         this.actionOptions = actionOptions;
         this.name = file.filename;
         this.additions = [];
-        this.deletions = [];
         this.parsePatch(file.patch);
     }
     /**
@@ -47,7 +45,6 @@ export class ModifiedFile {
                 // patch is usually like " -6,7 +6,8"
                 try {
                     const hasAddition = patch.includes('+');
-                    const hasDeletion = patch.includes('-');
                     if (hasAddition) {
                         const lines = patch
                             .match(/\+.*/)[0]
@@ -56,18 +53,6 @@ export class ModifiedFile {
                             .split(',')
                             .map((num) => parseInt(num));
                         this.additions.push(new FileLines({
-                            start: lines[0],
-                            end: lines[0] + lines[1],
-                        }));
-                    }
-                    if (hasDeletion) {
-                        const lines = patch
-                            .split('+')[0]
-                            .trim()
-                            .slice(1)
-                            .split(',')
-                            .map((num) => parseInt(num));
-                        this.deletions.push(new FileLines({
                             start: lines[0],
                             end: lines[0] + lines[1],
                         }));
@@ -87,8 +72,6 @@ export class ModifiedFile {
         }
         console.log('ModifiedFile.parsePatch()', 'this.additions');
         console.log(this.additions.map((line) => ({ start: line.start, end: line.end })));
-        console.log('ModifiedFile.parsePatch()', 'this.deletions');
-        console.log(this.deletions.map((line) => ({ start: line.start, end: line.end })));
     }
     /**
      * Whether the file has addition
@@ -194,6 +177,12 @@ export class ModifiedFiles {
      * @returns `true` if {@link fileName} is a modified file.
      */
     has(fileName) {
+        if (fileName.includes('badge_widget.dart')) {
+            console.log('ModifiedFiles.has()', 'fileName', fileName);
+            console.log('ModifiedFiles.has()', 'this.files.keys()', [
+                ...this.files.keys(),
+            ]); // Debugging line
+        }
         return this.files.has(fileName);
     }
     /**
