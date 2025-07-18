@@ -92,10 +92,6 @@ export class ModifiedFile {
         }),
       );
     }
-    console.log('ModifiedFile.parsePatch()', 'this.additions');
-    console.log(
-      this.additions.map((line) => ({ start: line.start, end: line.end })),
-    );
   }
 
   /**
@@ -146,14 +142,7 @@ export class ModifiedFiles {
    */
   private async init(): Promise<void> {
     const files = await this.getGithubFiles();
-    console.log('ModifiedFiles.init()', 'Github files');
-    console.log(files);
     for (const file of files) {
-      console.log('ModifiedFiles.init()', 'file', file);
-      console.log('ModifiedFiles.init()', 'process.env', process.env);
-
-      console.log('ModifiedFiles.init()', 'context', context);
-      console.log('ModifiedFiles.init()', 'github.context', github.context);
       const modifiedFile = new ModifiedFile(file, this.actionOptions);
       const githubWorkspace = process.env.GITHUB_WORKSPACE!;
       const paths = [file.filename, path.join(githubWorkspace, file.filename)];
@@ -170,8 +159,6 @@ export class ModifiedFiles {
         this.files.set(filePath, modifiedFile);
       }
     }
-    console.log('ModifiedFiles.init()', 'this.files');
-    console.log(this.files);
     this._resolveInit(true);
   }
 
@@ -232,12 +219,6 @@ export class ModifiedFiles {
    * @returns `true` if {@link fileName} is a modified file.
    */
   public has(fileName: string): boolean {
-    if (fileName.includes('badge_widget.dart')) {
-      console.log('ModifiedFiles.has()', 'fileName', fileName);
-      console.log('ModifiedFiles.has()', 'this.files.keys()', [
-        ...this.files.keys(),
-      ]); // Debugging line
-    }
     return this.files.has(fileName);
   }
 

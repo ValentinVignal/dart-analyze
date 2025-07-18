@@ -73,13 +73,11 @@ export async function analyze(params: {
         // Don't lint anything if the file is not part of the changes
         continue;
       }
-      console.log('analyze()', 'modifiedFiles.has(parsedLine.file)');
       const modifiedFile = params.modifiedFiles.get(parsedLine.file)!;
       if (!modifiedFile.hasAdditionLine(parsedLine.line)) {
         // Don't lint if the issue doesn't belong to the additions
         continue;
       }
-      console.log('analyze()', 'modifiedFile.hasAdditionLine(parsedLine.line)');
 
       parsedLines.push(parsedLine);
       let urls = parsedLine.urls.join(' or ');
