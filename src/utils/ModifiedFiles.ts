@@ -150,6 +150,10 @@ export class ModifiedFiles {
     console.log(files);
     for (const file of files) {
       console.log('ModifiedFiles.init()', 'file', file);
+      console.log('ModifiedFiles.init()', 'process.env', process.env);
+
+      console.log('ModifiedFiles.init()', 'context', context);
+      console.log('ModifiedFiles.init()', 'github.context', github.context);
       this.files.set(
         path.join(process.env.GITHUB_WORKSPACE!, file.filename),
         new ModifiedFile(file, this.actionOptions),
