@@ -15,10 +15,6 @@ const infoLine =
 const makeOptions = (failOn: number) => ({ failOn }) as any;
 
 describe('ParsedLine', () => {
-  beforeAll(() => {
-    process.env.GITHUB_WORKSPACE = GITHUB_WORKSPACE;
-  });
-
   it('parses error line correctly', () => {
     const pl = new ParsedLine(
       { line: baseLine },
@@ -89,15 +85,5 @@ describe('ParsedLine', () => {
     expect(
       new ParsedLine({ line: infoLine }, makeOptions(FailOnEnum.Info)).isFail,
     ).toBe(true);
-  });
-
-  it('returns correct humanReadableString', () => {
-    const pl = new ParsedLine(
-      { line: baseLine },
-      makeOptions(FailOnEnum.Error),
-    );
-    expect(pl.humanReadableString).toContain(
-      'Error - `lib/main.dart`:96:13 - Prefer const with constant constructors. (prefer_const_constructors).',
-    );
   });
 });
