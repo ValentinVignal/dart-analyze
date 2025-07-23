@@ -1,5 +1,7 @@
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 import { FailOnEnum } from '../utils/FailOn.js';
+import type { ModifiedFile } from '../utils/ModifiedFiles.js';
+import { DartAnalyzeLogType } from './DartAnalyzeLogType.js';
 import { ParsedLine } from './ParsedLine.js';
 
 export interface AnalyzeResultCountsInterface {
@@ -7,6 +9,11 @@ export interface AnalyzeResultCountsInterface {
   warnings: number;
   errors: number;
 }
+
+export type AnalyzeResultLine = {
+  line: ParsedLine;
+  file: ModifiedFile;
+};
 
 /**
  * Different log counts from the dart Analyze
@@ -51,12 +58,12 @@ class AnalyzeResultCounts {
  */
 export interface AnalyzeResultInterface {
   counts: AnalyzeResultCountsInterface;
-  lines: ParsedLine[];
+  lines: AnalyzeResultLine[];
 }
 
 export class AnalyzeResult {
   counts: AnalyzeResultCounts;
-  lines: ParsedLine[];
+  lines: AnalyzeResultLine[];
 
   constructor(
     params: AnalyzeResultInterface,
@@ -87,18 +94,19 @@ export class AnalyzeResult {
     const comments: string[] = [];
 
     for (const line of this.lines) {
-      const urls = `See [link](${line.urls[0]}) or [link](${line.urls[1]}).`;
+      const urls = `See [link](${line.line.urls[0]}) or [link](${line.line.urls[1]}).`;
       let failEmoji = '';
       if (
         ![FailOnEnum.Nothing, FailOnEnum.Format, FailOnEnum.Info].includes(
           this.actionOptions.failOn,
         )
       ) {
-        failEmoji = `:${line.isFail ? 'x' : 'poop'}: `;
+        failEmoji = `:${line.line.isFail ? 'x' : 'poop'}: `;
       }
-      const highlight = line.isFail ? '**' : '';
+      const highlight = line.line.isFail ? '**' : '';
+      const humanReadableString = `${DartAnalyzeLogType.typeToString(line.line.type)} - \`${line.file.name}\`:${line.line.line}:${line.line.column} - ${line.line.message} (${line.line.lintName}).`;
       comments.push(
-        `- ${this.actionOptions.emojis ? failEmoji + line.emoji + ' ' : ''}${highlight}${line.humanReadableString}${highlight} ${urls}`,
+        `- ${this.actionOptions.emojis ? failEmoji + line.line.emoji + ' ' : ''}${highlight}${humanReadableString}${highlight} ${urls}`,
       );
     }
     return comments.join('\n');

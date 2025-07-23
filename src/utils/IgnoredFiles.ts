@@ -16,7 +16,7 @@ type AnalysisOptions = {
  */
 export class IgnoredFiles {
   private readonly patterns: Minimatch[];
-  constructor(private readonly actionOptions: ActionOptionsSafe) {
+  constructor(actionOptions: ActionOptionsSafe) {
     let patterns: string[];
     try {
       const yamlPath = IgnoredFiles.findClosestYamlFile(

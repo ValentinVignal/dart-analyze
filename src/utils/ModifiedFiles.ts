@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { context } from '@actions/github/lib/utils.js';
 import path from 'path';
 import type { EventName } from '../Actions/Github/EventName.js';
 import type { ActionOptions, ActionOptionsSafe } from './ActionOptions.js';
@@ -128,7 +127,6 @@ export class ModifiedFiles {
 
   constructor(private readonly actionOptions: ActionOptionsSafe) {
     this.files = new Map<ModifiedFile['name'], ModifiedFile>();
-    const resolveInit: ((value: boolean) => void)[] = [];
     let tempResolveInit: (value: boolean) => void;
     this.isInit = new Promise<boolean>((resolve) => {
       tempResolveInit = resolve;
@@ -138,7 +136,7 @@ export class ModifiedFiles {
   }
 
   /**
-   * Init the class
+   * Init the class.
    */
   private async init(): Promise<void> {
     const files = await this.getGithubFiles();
@@ -193,17 +191,16 @@ export class ModifiedFiles {
     /// Github client from API token
     const client = github.getOctokit(this.actionOptions.token);
 
-    const response = await client.rest.repos.compareCommits({
-      base,
-      head,
-      owner: context.repo.owner,
-      repo: context.repo.repo,
+    const response = await client.rest.repos.compareCommitsWithBasehead({
+      basehead: `${base}...${head}`,
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
     });
 
     // Ensure that the request was successful.
     if (response.status !== 200) {
       core.setFailed(
-        `The GitHub API for comparing the base and head commits for this ${context.eventName} event returned ${response.status}, expected 200. ` +
+        `The GitHub API for comparing the base and head commits for this ${github.context.eventName} event returned ${response.status}, expected 200. ` +
           "Please submit an issue on this action's GitHub repo.",
       );
     }

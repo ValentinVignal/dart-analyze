@@ -1,5 +1,4 @@
 import * as github from '@actions/github';
-import { context } from '@actions/github/lib/utils.js';
 import type { ActionOptionsSafe } from './ActionOptions.js';
 
 /**
@@ -31,7 +30,7 @@ export async function comment(
     // Get all comments on the PR
     const comments = await octokit.rest.issues.listComments({
       ...github.context.repo,
-      issue_number: context.payload.pull_request!.number,
+      issue_number: github.context.payload.pull_request!.number,
     });
 
     // Find existing comment from this specific action (using a unique identifier)
@@ -53,7 +52,7 @@ export async function comment(
       // Create new comment
       await octokit.rest.issues.createComment({
         ...github.context.repo,
-        issue_number: context.payload.pull_request!.number,
+        issue_number: github.context.payload.pull_request!.number,
         body: messageWithIdentifier,
       });
     }

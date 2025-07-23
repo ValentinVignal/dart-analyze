@@ -49,6 +49,8 @@ export class ParsedLine {
     params: { line: string },
     private readonly actionOptions: ActionOptionsSafe,
   ) {
+    // A line from `dart analyze --format machine` looks like this:
+    // SEVERITY|TYPE|ERROR_CODE|FILE_PATH|LINE|COLUMN|LENGTH|ERROR_MESSAGE
     this.originalLine = params.line; // 'INFO|LINT|PREFER_CONST_CONSTRUCTORS|/path/to/file.dart|96|13|80|Prefer const with constant constructors.'
     const lineData = params.line.split(delimiter); // ['INFO', 'LINT', 'PREFER_CONST_CONSTRUCTORS', '/path/to/file.dart', '96', '13', '80', 'Prefer const with constant constructors.']
     this.type = DartAnalyzeLogType.typeFromKey(
@@ -101,12 +103,5 @@ export class ParsedLine {
       case DartAnalyzeLogTypeEnum.Info:
         return ':eyes:';
     }
-  }
-
-  /**
-   * Returns the string representation of the log type.
-   */
-  public get humanReadableString(): string {
-    return `${DartAnalyzeLogType.typeToString(this.type)} - \`${path.relative(process.env.GITHUB_WORKSPACE!, this.file)}\`:${this.line}:${this.column} - ${this.message} (${this.lintName}).`;
   }
 }
