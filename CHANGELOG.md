@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.3.2
+
+### Patch Changes
+
+- 7cc654d: Fix annotation when the path contains \_\_w
+
 ## 0.3.1
 
 ### Patch Changes
