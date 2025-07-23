@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { context } from '@actions/github/lib/utils.js';
 import path from 'path';
 import { ModifiedFiles } from './ModifiedFiles.js';
 import type { ActionOptionsSafe } from './ActionOptions.js';
 
 vi.mock('@actions/core');
 vi.mock('@actions/github');
-vi.mock('@actions/github/lib/utils.js');
 vi.mock('path');
 
 describe('ModifiedFiles', () => {
@@ -42,7 +40,7 @@ describe('ModifiedFiles', () => {
   const mockOctokit = {
     rest: {
       repos: {
-        compareCommits: vi.fn(),
+        compareCommitsWithBasehead: vi.fn(),
       },
     },
   };
@@ -66,19 +64,9 @@ describe('ModifiedFiles', () => {
       },
     };
 
-    Object.defineProperty(context, 'repo', {
-      value: {
-        owner: 'test-owner',
-        repo: 'test-repo',
-      },
-      writable: true,
-      configurable: true,
-    });
-
-    Object.defineProperty(context, 'eventName', {
-      value: 'pull_request',
-      writable: true,
-      configurable: true,
+    vi.spyOn(github.context, 'repo', 'get').mockReturnValue({
+      owner: 'test-owner',
+      repo: 'test-repo',
     });
 
     vi.mocked(github.getOctokit).mockReturnValue(mockOctokit as any);
@@ -96,7 +84,7 @@ describe('ModifiedFiles', () => {
   describe('FileLines class', () => {
     // Since FileLines is not exported, we'll test it through ModifiedFile behavior
     it('should include lines within range', async () => {
-      mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+      mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
         status: 200,
         data: {
           files: [
@@ -122,7 +110,7 @@ describe('ModifiedFiles', () => {
   describe('ModifiedFile class', () => {
     describe('constructor and parsePatch', () => {
       it('should parse patch with additions correctly', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -148,7 +136,7 @@ describe('ModifiedFiles', () => {
       });
 
       it('should parse patch with deletions correctly', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -172,7 +160,7 @@ describe('ModifiedFiles', () => {
       });
 
       it('should parse patch with both additions and deletions', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -203,7 +191,7 @@ describe('ModifiedFiles', () => {
           checkRenamedFiles: true,
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -226,7 +214,7 @@ describe('ModifiedFiles', () => {
       });
 
       it('should not add additions for renamed files when checkRenamedFiles is false', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -250,7 +238,7 @@ describe('ModifiedFiles', () => {
 
     describe('hasAdditionLine method', () => {
       it('should return true for lines within addition ranges', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -278,7 +266,7 @@ describe('ModifiedFiles', () => {
   describe('ModifiedFiles class', () => {
     describe('constructor and initialization', () => {
       it('should initialize with empty files map', () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [],
@@ -291,7 +279,7 @@ describe('ModifiedFiles', () => {
       });
 
       it('should initialize files after construction', async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: mockGithubFiles,
@@ -331,7 +319,7 @@ describe('ModifiedFiles', () => {
           },
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: mockGithubFiles },
         });
@@ -339,9 +327,10 @@ describe('ModifiedFiles', () => {
         const modifiedFiles = new ModifiedFiles(mockActionOptions);
         await modifiedFiles.isInit;
 
-        expect(mockOctokit.rest.repos.compareCommits).toHaveBeenCalledWith({
-          base: 'base-sha',
-          head: 'head-sha',
+        expect(
+          mockOctokit.rest.repos.compareCommitsWithBasehead,
+        ).toHaveBeenCalledWith({
+          basehead: 'base-sha...head-sha',
           owner: 'test-owner',
           repo: 'test-repo',
         });
@@ -354,7 +343,7 @@ describe('ModifiedFiles', () => {
           after: 'after-sha',
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: mockGithubFiles },
         });
@@ -362,9 +351,10 @@ describe('ModifiedFiles', () => {
         const modifiedFiles = new ModifiedFiles(mockActionOptions);
         await modifiedFiles.isInit;
 
-        expect(mockOctokit.rest.repos.compareCommits).toHaveBeenCalledWith({
-          base: 'before-sha',
-          head: 'after-sha',
+        expect(
+          mockOctokit.rest.repos.compareCommitsWithBasehead,
+        ).toHaveBeenCalledWith({
+          basehead: 'before-sha...after-sha',
           owner: 'test-owner',
           repo: 'test-repo',
         });
@@ -373,7 +363,7 @@ describe('ModifiedFiles', () => {
       it('should fail for unsupported events', async () => {
         vi.mocked(github.context).eventName = 'unsupported_event';
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: [] },
         });
@@ -398,7 +388,7 @@ describe('ModifiedFiles', () => {
           },
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 404,
           data: { files: [] },
         });
@@ -414,7 +404,7 @@ describe('ModifiedFiles', () => {
 
     describe('has method', () => {
       beforeEach(async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: mockGithubFiles },
         });
@@ -454,7 +444,7 @@ describe('ModifiedFiles', () => {
 
     describe('get method', () => {
       beforeEach(async () => {
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: mockGithubFiles },
         });
@@ -483,7 +473,7 @@ describe('ModifiedFiles', () => {
         const complexPatch =
           '@@ -1,5 +1,7 @@\n line1\n-line2\n+newline2\n line3\n+newline4\n line5\n+newline6\n+newline7';
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: {
             files: [
@@ -530,7 +520,7 @@ describe('ModifiedFiles', () => {
           checkRenamedFiles: true,
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: multipleFiles },
         });
@@ -564,7 +554,7 @@ describe('ModifiedFiles', () => {
           token: customToken,
         };
 
-        mockOctokit.rest.repos.compareCommits.mockResolvedValue({
+        mockOctokit.rest.repos.compareCommitsWithBasehead.mockResolvedValue({
           status: 200,
           data: { files: [] },
         });

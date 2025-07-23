@@ -46,9 +46,9 @@ describe('analyze', () => {
     expect(result.counts.warnings).toBe(1);
     expect(result.counts.info).toBe(1);
     expect(result.lines.length).toBe(3);
-    expect(result.lines?.[0]?.type).toBe(DartAnalyzeLogTypeEnum.Error);
-    expect(result.lines?.[1]?.type).toBe(DartAnalyzeLogTypeEnum.Warning);
-    expect(result.lines?.[2]?.type).toBe(DartAnalyzeLogTypeEnum.Info);
+    expect(result.lines?.[0]?.line.type).toBe(DartAnalyzeLogTypeEnum.Error);
+    expect(result.lines?.[1]?.line.type).toBe(DartAnalyzeLogTypeEnum.Warning);
+    expect(result.lines?.[2]?.line.type).toBe(DartAnalyzeLogTypeEnum.Info);
   });
 
   it('skips lines not containing delimiter', async () => {

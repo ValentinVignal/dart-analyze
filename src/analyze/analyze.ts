@@ -1,7 +1,7 @@
 import * as exec from '@actions/exec';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
-import { ModifiedFiles } from '../utils/ModifiedFiles.js';
-import { AnalyzeResult } from './AnalyzeResult.js';
+import { ModifiedFile, ModifiedFiles } from '../utils/ModifiedFiles.js';
+import { AnalyzeResult, type AnalyzeResultLine } from './AnalyzeResult.js';
 import {
   DartAnalyzeLogType,
   DartAnalyzeLogTypeEnum,
@@ -56,7 +56,7 @@ export async function analyze(params: {
   let warningCount = 0;
   let infoCount = 0;
 
-  const parsedLines: ParsedLine[] = [];
+  const parsedLines: AnalyzeResultLine[] = [];
 
   for (const line of analyzerLines) {
     if (!line.includes(delimiter)) {
@@ -79,9 +79,20 @@ export async function analyze(params: {
         continue;
       }
 
-      parsedLines.push(parsedLine);
+      parsedLines.push({ line: parsedLine, file: modifiedFile });
       let urls = parsedLine.urls.join(' or ');
-      const message = `file=${parsedLine.file},line=${parsedLine.line},col=${parsedLine.column}::${parsedLine.message}. See ${urls}`;
+      // We use the name of the modified file because it comes from
+      // `@action/github`. The path of the file in the output lines of the
+      // analyzer or formatter might contain the full path.
+      //
+      // For example, the file might be
+      // `/home/runner/work/my-repo/my-repo/lib/src/folder/file.dart` or
+      // `__w/my-repo/my-repo/lib/src/folder/file.dart` while the modified file
+      // name is `lib/src/folder/file.dart`.
+      //
+      // In order for the annotations to work, we need to use the path from the
+      // root of the repository.
+      const message = `file=${modifiedFile.name},line=${parsedLine.line},col=${parsedLine.column}::${parsedLine.message} (${parsedLine.lintName}) See ${urls}`;
 
       switch (parsedLine.type) {
         case DartAnalyzeLogTypeEnum.Error:
