@@ -97,7 +97,7 @@ export class AnalyzeResult {
       const urls = `See [link](${line.line.urls[0]}) or [link](${line.line.urls[1]}).`;
       let failEmoji = '';
       if (
-        ![FailOnEnum.Nothing, FailOnEnum.Format, FailOnEnum.Info].includes(
+        [FailOnEnum.Error, FailOnEnum.Warning].includes(
           this.actionOptions.failOn,
         )
       ) {

@@ -8,8 +8,8 @@ export class FailOn {
     switch (input) {
       case 'nothing':
         return FailOnEnum.Nothing;
-      case 'format':
-        return FailOnEnum.Format;
+      case 'note':
+        return FailOnEnum.Note;
       case 'info':
         return FailOnEnum.Info;
       case 'warning':
@@ -41,9 +41,9 @@ export enum FailOnEnum {
    */
   Info = 2,
   /**
-   * Fail on format issues.
+   * Fail on note issues.
    */
-  Format = 3,
+  Note = 3,
   /**
    * Do not fail the action regardless of the logs.
    */
