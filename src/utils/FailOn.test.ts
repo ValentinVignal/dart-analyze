@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { FailOn, FailOnEnum } from './FailOn.js';
 
 describe('FailOn', () => {
@@ -7,7 +7,7 @@ describe('FailOn', () => {
       expect(FailOn.fromInput('nothing')).toBe(FailOnEnum.Nothing);
     });
     it('returns FailOnEnum.Format for input "format"', () => {
-      expect(FailOn.fromInput('format')).toBe(FailOnEnum.Format);
+      expect(FailOn.fromInput('note')).toBe(FailOnEnum.Note);
     });
     it('returns FailOnEnum.Info for input "info"', () => {
       expect(FailOn.fromInput('info')).toBe(FailOnEnum.Info);
@@ -20,16 +20,6 @@ describe('FailOn', () => {
     });
     it('returns FailOnEnum.Warning for undefined input', () => {
       expect(FailOn.fromInput(undefined)).toBe(FailOnEnum.Warning);
-    });
-  });
-
-  describe('FailOnEnum', () => {
-    it('has correct enum values', () => {
-      expect(FailOnEnum.Error).toBe(0);
-      expect(FailOnEnum.Warning).toBe(1);
-      expect(FailOnEnum.Info).toBe(2);
-      expect(FailOnEnum.Format).toBe(3);
-      expect(FailOnEnum.Nothing).toBe(4);
     });
   });
 });

@@ -2,6 +2,9 @@ import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 import { FailOnEnum } from '../utils/FailOn.js';
 
 export enum DartAnalyzeLogTypeEnum {
+  // Extra log type to represent notes.
+  Note = 0,
+  // Log type existing in dart analyze output.
   Info = 1,
   Warning = 2,
   Error = 3,
@@ -13,7 +16,7 @@ export enum DartAnalyzeLogTypeEnum {
  */
 export type DartAnalyzeLogTypeKey = 'INFO' | 'WARNING' | 'ERROR';
 
-export type LogKey = 'WARNING' | 'ERROR';
+export type LogKey = 'WARNING' | 'ERROR' | 'NOTICE';
 
 /**
  * Represents the type of a Dart analyze log.
@@ -41,8 +44,10 @@ export class DartAnalyzeLogType {
     switch (logType) {
       case DartAnalyzeLogTypeEnum.Error:
         return 'ERROR';
-      default:
+      case DartAnalyzeLogTypeEnum.Warning:
         return 'WARNING';
+      default:
+        return 'NOTICE';
     }
   }
 
@@ -56,10 +61,14 @@ export class DartAnalyzeLogType {
     switch (actionOptions.failOn) {
       case FailOnEnum.Nothing:
         return false;
-      case FailOnEnum.Format:
-        return false;
-      case FailOnEnum.Info:
+      case FailOnEnum.Note:
         return true;
+      case FailOnEnum.Info:
+        return [
+          DartAnalyzeLogTypeEnum.Info,
+          DartAnalyzeLogTypeEnum.Warning,
+          DartAnalyzeLogTypeEnum.Error,
+        ].includes(logType);
       case FailOnEnum.Warning:
         return (
           logType === DartAnalyzeLogTypeEnum.Error ||
@@ -76,12 +85,32 @@ export class DartAnalyzeLogType {
    */
   public static typeToString(logType: DartAnalyzeLogTypeEnum): string {
     switch (logType) {
+      case DartAnalyzeLogTypeEnum.Note:
+        return 'Note';
       case DartAnalyzeLogTypeEnum.Info:
         return 'Info';
       case DartAnalyzeLogTypeEnum.Warning:
         return 'Warning';
       case DartAnalyzeLogTypeEnum.Error:
         return 'Error';
+    }
+  }
+
+  /**
+   * Converts the log type to a string.
+   */
+  public static typeFromString(logType: string): DartAnalyzeLogTypeEnum {
+    switch (logType.toLowerCase()) {
+      case 'note':
+        return DartAnalyzeLogTypeEnum.Note;
+      case 'info':
+        return DartAnalyzeLogTypeEnum.Info;
+      case 'warning':
+        return DartAnalyzeLogTypeEnum.Warning;
+      case 'error':
+        return DartAnalyzeLogTypeEnum.Error;
+      default:
+        throw new Error(`Unknown log type: ${logType}`);
     }
   }
 }

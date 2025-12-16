@@ -1,4 +1,8 @@
 import path from 'path';
+import {
+  DartAnalyzeLogType,
+  type DartAnalyzeLogTypeEnum,
+} from '../analyze/DartAnalyzeLogType.js';
 import { FailOn, FailOnEnum } from './FailOn.js';
 import {
   getInputMultilineString,
@@ -16,6 +20,14 @@ export type ActionOptionsSafe = {
    * Default is {@link FailOnEnum.Warning}.
    */
   failOn: FailOnEnum;
+
+  /**
+   * Whether to fail on format issues.
+   *
+   * Defaults to `true`.
+   */
+  failOnFormat: boolean;
+
   /**
    * The working directory of the action.
    */
@@ -66,12 +78,61 @@ export type ActionOptionsSafe = {
    * - If provided, {@link lineLength} will be ignored.
    */
   formatLines?: string[];
+
+  /**
+   * Severity overrides for specific rules.
+   *
+   *
+   */
+  severityOverrides: Map<string, DartAnalyzeLogTypeEnum>;
 };
 
 /**
  * Contains all the options of the action.
  */
 export type ActionOptions = Partial<ActionOptionsSafe>;
+
+// ...existing code...
+
+/**
+ * Parses severity overrides from input.
+ * Supports both multiline format (one per line) and inline format (comma-separated).
+ *
+ * Examples:
+ * - Multiline: "rule1: error\nrule2: warning\nrule3: info\nrule4: note"
+ * - Inline: "rule1: error, rule2: warning, rule3: info, rule4: note"
+ */
+const getSeverityOverrides = (): Map<string, DartAnalyzeLogTypeEnum> => {
+  const input = getInputString('severity-overrides');
+
+  const map = new Map<string, DartAnalyzeLogTypeEnum>();
+  if (!input) {
+    return map;
+  }
+
+  // Split by newlines first, then by commas for inline format
+  const entries = input.includes('\n') ? input.split('\n') : input.split(',');
+
+  for (const entry of entries) {
+    const trimmed = entry.trim();
+    if (!trimmed) continue;
+
+    const [key, value] = trimmed
+      .split(':')
+      .map((part) => part.trim().toLocaleLowerCase());
+    if (!key || !value) {
+      throw new Error(
+        `Invalid format for severity-overrides: "${entry}". Expected format: "key: value"`,
+      );
+    }
+
+    const valueEnum = DartAnalyzeLogType.typeFromString(value);
+
+    map.set(key, valueEnum);
+  }
+
+  return map;
+};
 
 /**
  * Applies the default values to the action options.
@@ -86,6 +147,9 @@ export const applyDefaults = (options?: ActionOptions): ActionOptionsSafe => {
   }
   return {
     failOn: options?.failOn ?? FailOn.fromInput(getInputString('fail-on')),
+    failOnFormat:
+      options?.failOnFormat ??
+      (getInputString('fail-on-format') || 'true') === 'true',
     workingDirectory: path.resolve(
       process.env.GITHUB_WORKSPACE!,
       options?.workingDirectory ?? getInputString('working-directory') ?? './',
@@ -101,5 +165,6 @@ export const applyDefaults = (options?: ActionOptions): ActionOptionsSafe => {
       options?.analyzerLines ?? getInputMultilineString('analyzer-lines'),
     formatLines:
       options?.formatLines ?? getInputMultilineString('format-lines'),
+    severityOverrides: options?.severityOverrides ?? getSeverityOverrides(),
   };
 };

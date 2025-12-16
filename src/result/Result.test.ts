@@ -1,12 +1,12 @@
 const commentMock = vi.hoisted(() => vi.fn());
 vi.mock('../utils/comment.ts', () => ({ comment: commentMock }));
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Result } from './Result.js';
-import { FailOnEnum } from '../utils/FailOn.js';
-import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnalyzeResult } from '../analyze/AnalyzeResult.js';
 import { FormatResult } from '../format/FormatResult.js';
+import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
+import { FailOnEnum } from '../utils/FailOn.js';
+import { Result } from './Result.js';
 
 export function createAnalyzeResultWithSuccess(
   success: boolean,
@@ -15,11 +15,12 @@ export function createAnalyzeResultWithSuccess(
   // If success is false, failCount must be > 0, but only if failOn is not Nothing
   let errors = 0,
     warnings = 0,
-    info = 0;
+    info = 0,
+    notes = 0;
   if (!success && actionOptions.failOn !== 4) {
     errors = 1;
   }
-  const counts = { errors, warnings, info };
+  const counts = { errors, warnings, info, notes };
   return new AnalyzeResult({ counts, lines: [] }, actionOptions);
 }
 
@@ -48,9 +49,12 @@ describe('Result', () => {
       format: true,
       emojis: true,
       failOn: FailOnEnum.Nothing,
+      failOnFormat: true,
       workingDirectory: '.',
       token: 'token',
+      severityOverrides: new Map<string, number>(),
     };
+
     analyze = createAnalyzeResultWithSuccess(true, actionOptions);
     format = createFormatResultWithSuccess(true, actionOptions);
   });
@@ -74,14 +78,8 @@ describe('Result', () => {
   });
 
   it('should not be successful if format fails', () => {
-    const failedFormat = createFormatResultWithSuccess(false, {
-      ...actionOptions,
-      failOn: 3,
-    });
-    const result = new Result(
-      { analyze, format: failedFormat },
-      { ...actionOptions, failOn: 3 },
-    );
+    const failedFormat = createFormatResultWithSuccess(false, actionOptions);
+    const result = new Result({ analyze, format: failedFormat }, actionOptions);
     expect(result.success).toBe(false);
   });
 
@@ -105,7 +103,7 @@ describe('Result', () => {
     // Simulate issues by using a custom AnalyzeResult with counts.total > 0
     const analyzeWithIssues = new (analyze.constructor as any)(
       {
-        counts: { errors: 0, warnings: 0, info: 1 },
+        counts: { errors: 0, warnings: 0, info: 1, notes: 0 },
         lines: [],
       },
       actionOptions,
@@ -138,5 +136,57 @@ describe('Result', () => {
     result.log();
     expect(setFailed).toHaveBeenCalled();
     setFailed.mockRestore();
+  });
+
+  describe('.count', () => {
+    it('should return the count of errors', () => {
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 1, warnings: 2, info: 3, notes: 4 },
+              lines: [],
+            },
+            { ...actionOptions, failOn: FailOnEnum.Warning },
+          ),
+          format: new FormatResult(actionOptions, {
+            files: new Set(['file1.dart', 'file2.dart']),
+          }),
+        },
+        actionOptions,
+      );
+      expect(result['count']).toBe(12);
+    });
+  });
+
+  describe('.issueCountMessage', () => {
+    it('should return the message listing the count of issues', () => {
+      const testActionOptions = {
+        ...actionOptions,
+        failOn: FailOnEnum.Warning,
+      };
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 1, warnings: 2, info: 3, notes: 4 },
+              lines: [],
+            },
+            testActionOptions,
+          ),
+          format: new FormatResult(testActionOptions, {
+            files: new Set(['file1.dart', 'file2.dart']),
+          }),
+        },
+        testActionOptions,
+      );
+      expect(result['issueCountMessage']({ emojis: true }))
+        .toEqual(`:x: Dart Analyzer found 12 issues
+- :x: **1 error.**
+- :warning: **2 warnings.**
+- :eyes: 3 info logs.
+- :memo: 4 note logs.
+- :poop: **2 formatting issues.**`);
+    });
   });
 });

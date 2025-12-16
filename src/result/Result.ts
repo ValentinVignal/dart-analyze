@@ -5,9 +5,8 @@ import {
   DartAnalyzeLogTypeEnum,
 } from '../analyze/DartAnalyzeLogType.js';
 import { FormatResult } from '../format/FormatResult.js';
-import { comment } from '../utils/comment.js';
-import { FailOnEnum } from '../utils/FailOn.js';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
+import { comment } from '../utils/comment.js';
 
 export interface ResultInterface {
   analyze: AnalyzeResult;
@@ -86,6 +85,19 @@ export class Result {
         type: DartAnalyzeLogTypeEnum.Info,
       }),
     ];
+    if (
+      this.analyze.counts.notes ||
+      [...this.actionOptions.severityOverrides.values()].some(
+        (value) => value === DartAnalyzeLogTypeEnum.Note,
+      )
+    ) {
+      messages.push(
+        this.titleLineAnalyze({
+          ...params,
+          type: DartAnalyzeLogTypeEnum.Note,
+        }),
+      );
+    }
     if (this.actionOptions.format) {
       messages.push(this.titleLineFormat({ ...params }));
     }
@@ -137,6 +149,11 @@ export class Result {
         emoji = count ? 'eyes' : 'rocket';
         line = `${count} info log${Result.pluralS(count)}`;
         break;
+      case DartAnalyzeLogTypeEnum.Note:
+        count = this.analyze.counts.notes;
+        emoji = count ? 'memo' : 'rocket';
+        line = `${count} note log${Result.pluralS(count)}`;
+        break;
     }
 
     const highlight = isFail && params.emojis && count ? '**' : '';
@@ -154,12 +171,10 @@ export class Result {
   private titleLineFormat(params: { emojis?: boolean }): string {
     const emoji = `:${this.format.count ? 'poop' : 'art'}: `;
     const highlight =
-      params.emojis &&
-      this.format.count &&
-      this.actionOptions.failOn === FailOnEnum.Format
+      params.emojis && this.format.count && this.actionOptions.failOnFormat
         ? '**'
         : '';
-    return `- ${params.emojis && this.actionOptions.emojis ? emoji : ''}${highlight}${this.format.count} formatting issue${Result.pluralS(this.format.count)}${highlight}`;
+    return `- ${params.emojis && this.actionOptions.emojis ? emoji : ''}${highlight}${this.format.count} formatting issue${Result.pluralS(this.format.count)}.${highlight}`;
   }
 
   /**

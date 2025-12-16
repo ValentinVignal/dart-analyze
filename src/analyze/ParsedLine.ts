@@ -1,4 +1,5 @@
 import path from 'path';
+import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 import { FailOnEnum } from '../utils/FailOn.js';
 import {
   DartAnalyzeLogType,
@@ -6,7 +7,6 @@ import {
   type DartAnalyzeLogTypeKey,
 } from './DartAnalyzeLogType.js';
 import { delimiter } from './delimiter.js';
-import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 
 /**
  * Represents a parsed line from the `dart analyze --format machine` output.
@@ -53,19 +53,23 @@ export class ParsedLine {
     // SEVERITY|TYPE|ERROR_CODE|FILE_PATH|LINE|COLUMN|LENGTH|ERROR_MESSAGE
     this.originalLine = params.line; // 'INFO|LINT|PREFER_CONST_CONSTRUCTORS|/path/to/file.dart|96|13|80|Prefer const with constant constructors.'
     const lineData = params.line.split(delimiter); // ['INFO', 'LINT', 'PREFER_CONST_CONSTRUCTORS', '/path/to/file.dart', '96', '13', '80', 'Prefer const with constant constructors.']
-    this.type = DartAnalyzeLogType.typeFromKey(
-      lineData[0] as DartAnalyzeLogTypeKey,
-    );
     this.message = lineData[7]!; // 'Prefer const with constant constructors.'
     this.file = path.join(lineData[3]!); // '/path/to/file.dart'
     const lineNumber = lineData[4]!; // '96'
     const columnNumber = lineData[5]!; // '13'
-    const lintName = lineData[2]!.toLowerCase(); // 'PREFER_CONST_CONSTRUCTORS'
+    const lintName = lineData[2]!; // 'PREFER_CONST_CONSTRUCTORS'
     this.lintName = lintName.toLowerCase(); // 'prefer_const_constructors'
     this.urls = [
       `https://dart.dev/diagnostic/${this.lintName}`,
       `https://dart.dev/lints/${this.lintName}`,
     ];
+    if (this.actionOptions.severityOverrides?.has(this.lintName) ?? false) {
+      this.type = this.actionOptions.severityOverrides!.get(this.lintName)!;
+    } else {
+      this.type = DartAnalyzeLogType.typeFromKey(
+        lineData[0] as DartAnalyzeLogTypeKey,
+      );
+    }
     this.line = parseInt(lineNumber);
     this.column = parseInt(columnNumber);
   }
@@ -78,14 +82,20 @@ export class ParsedLine {
       if (this.type === DartAnalyzeLogTypeEnum.Error) {
         return true;
       }
-      if (this.actionOptions.failOn !== FailOnEnum.Error) {
-        if (this.type === DartAnalyzeLogTypeEnum.Warning) {
-          return true;
-        }
-        if (this.actionOptions.failOn !== FailOnEnum.Warning) {
-          // It is FailOn.Info
-          return true;
-        }
+      if (this.actionOptions.failOn === FailOnEnum.Error) {
+        return false;
+      }
+      if (this.type === DartAnalyzeLogTypeEnum.Warning) {
+        return true;
+      }
+      if (this.actionOptions.failOn === FailOnEnum.Warning) {
+        return false;
+      }
+      if (this.type === DartAnalyzeLogTypeEnum.Info) {
+        return true;
+      }
+      if (this.actionOptions.failOn === FailOnEnum.Info) {
+        return false;
       }
     }
     return false;
@@ -102,6 +112,8 @@ export class ParsedLine {
         return ':warning:';
       case DartAnalyzeLogTypeEnum.Info:
         return ':eyes:';
+      case DartAnalyzeLogTypeEnum.Note:
+        return ':memo:';
     }
   }
 }

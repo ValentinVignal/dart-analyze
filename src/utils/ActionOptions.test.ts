@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DartAnalyzeLogTypeEnum } from '../analyze/DartAnalyzeLogType.js';
 import { applyDefaults } from './ActionOptions.js';
 import { FailOnEnum } from './FailOn.js';
 
@@ -99,5 +100,44 @@ describe('applyDefaults', () => {
     expect(result.lineLength).toBe(77);
     expect(result.analyzerLines).toEqual(['a']);
     expect(result.formatLines).toEqual(['b']);
+  });
+
+  it('should parse the severity-overrides multiline input', () => {
+    process.env.INPUT_SEVERITY_OVERRIDES = `rule1: error
+rule2: warning
+rule3: info
+rule4: note`;
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'warning';
+    process.env.GITHUB_WORKSPACE = '/ws';
+
+    const result = applyDefaults();
+
+    expect(result.severityOverrides).toEqual(
+      new Map<string, DartAnalyzeLogTypeEnum>([
+        ['rule1', DartAnalyzeLogTypeEnum.Error],
+        ['rule2', DartAnalyzeLogTypeEnum.Warning],
+        ['rule3', DartAnalyzeLogTypeEnum.Info],
+        ['rule4', DartAnalyzeLogTypeEnum.Note],
+      ]),
+    );
+  });
+
+  it('should parse the severity-overrides comma separated input', () => {
+    process.env.INPUT_SEVERITY_OVERRIDES = `rule1: error, rule2: warning, rule3: info, rule4: note`;
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'warning';
+    process.env.GITHUB_WORKSPACE = '/ws';
+
+    const result = applyDefaults();
+
+    expect(result.severityOverrides).toEqual(
+      new Map<string, DartAnalyzeLogTypeEnum>([
+        ['rule1', DartAnalyzeLogTypeEnum.Error],
+        ['rule2', DartAnalyzeLogTypeEnum.Warning],
+        ['rule3', DartAnalyzeLogTypeEnum.Info],
+        ['rule4', DartAnalyzeLogTypeEnum.Note],
+      ]),
+    );
   });
 });

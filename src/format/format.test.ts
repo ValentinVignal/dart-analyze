@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as exec from '@actions/exec';
-import { FailOnEnum } from '../utils/FailOn.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 import { IgnoredFiles } from '../utils/IgnoredFiles.js';
 import { ModifiedFiles } from '../utils/ModifiedFiles.js';
 import { format } from './format.js';
-import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
 
 describe('Format', () => {
   beforeEach(() => {
@@ -14,7 +13,7 @@ describe('Format', () => {
     const actionOptions = {
       format: true,
       workingDirectory: 'cwd/actionOptionWorkingDirectory',
-      failOn: FailOnEnum.Format,
+      failOnFormat: true,
     } as ActionOptionsSafe;
     const ignoredFiles: Partial<IgnoredFiles> = {
       has: vi.fn(),
@@ -100,7 +99,7 @@ describe('Format', () => {
     const actionOptions = {
       format: true,
       workingDirectory: 'cwd/actionOptionWorkingDirectory',
-      failOn: FailOnEnum.Format,
+      failOnFormat: true,
       formatLines: [
         'Changed lib/file_0.dart',
         'Changed lib/file_1.dart',

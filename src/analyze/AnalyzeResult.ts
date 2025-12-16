@@ -8,6 +8,7 @@ export interface AnalyzeResultCountsInterface {
   info: number;
   warnings: number;
   errors: number;
+  notes: number;
 }
 
 export type AnalyzeResultLine = {
@@ -22,6 +23,7 @@ class AnalyzeResultCounts {
   info: number;
   warnings: number;
   errors: number;
+  notes: number;
   constructor(
     params: AnalyzeResultCountsInterface,
     private readonly actionOptions: ActionOptionsSafe,
@@ -29,13 +31,14 @@ class AnalyzeResultCounts {
     this.info = params.info;
     this.warnings = params.warnings;
     this.errors = params.errors;
+    this.notes = params.notes;
   }
 
   /**
    * The total number of logs
    */
   public get total(): number {
-    return this.info + this.warnings + this.errors;
+    return this.info + this.warnings + this.errors + this.notes;
   }
 
   public get failCount(): number {
@@ -46,6 +49,9 @@ class AnalyzeResultCounts {
         count += this.warnings;
         if (this.actionOptions.failOn !== FailOnEnum.Warning) {
           count += this.info;
+          if (this.actionOptions.failOn !== FailOnEnum.Info) {
+            count += this.notes;
+          }
         }
       }
     }
@@ -95,18 +101,10 @@ export class AnalyzeResult {
 
     for (const line of this.lines) {
       const urls = `See [link](${line.line.urls[0]}) or [link](${line.line.urls[1]}).`;
-      let failEmoji = '';
-      if (
-        ![FailOnEnum.Nothing, FailOnEnum.Format, FailOnEnum.Info].includes(
-          this.actionOptions.failOn,
-        )
-      ) {
-        failEmoji = `:${line.line.isFail ? 'x' : 'poop'}: `;
-      }
       const highlight = line.line.isFail ? '**' : '';
       const humanReadableString = `${DartAnalyzeLogType.typeToString(line.line.type)} - \`${line.file.name}\`:${line.line.line}:${line.line.column} - ${line.line.message} (${line.line.lintName}).`;
       comments.push(
-        `- ${this.actionOptions.emojis ? failEmoji + line.line.emoji + ' ' : ''}${highlight}${humanReadableString}${highlight} ${urls}`,
+        `- ${this.actionOptions.emojis ? line.line.emoji + ' ' : ''}${highlight}${humanReadableString}${highlight} ${urls}`,
       );
     }
     return comments.join('\n');
