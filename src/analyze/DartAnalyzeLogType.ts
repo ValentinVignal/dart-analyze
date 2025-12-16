@@ -16,7 +16,7 @@ export enum DartAnalyzeLogTypeEnum {
  */
 export type DartAnalyzeLogTypeKey = 'INFO' | 'WARNING' | 'ERROR';
 
-export type LogKey = 'WARNING' | 'ERROR';
+export type LogKey = 'WARNING' | 'ERROR' | 'NOTICE';
 
 /**
  * Represents the type of a Dart analyze log.
@@ -44,8 +44,10 @@ export class DartAnalyzeLogType {
     switch (logType) {
       case DartAnalyzeLogTypeEnum.Error:
         return 'ERROR';
-      default:
+      case DartAnalyzeLogTypeEnum.Warning:
         return 'WARNING';
+      default:
+        return 'NOTICE';
     }
   }
 

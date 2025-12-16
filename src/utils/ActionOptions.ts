@@ -102,7 +102,7 @@ export type ActionOptions = Partial<ActionOptionsSafe>;
  * - Multiline: "rule1: error\nrule2: warning\nrule3: info\nrule4: note"
  * - Inline: "rule1: error, rule2: warning, rule3: info, rule4: note"
  */
-export const getSeverityOverrides = (): Map<string, DartAnalyzeLogTypeEnum> => {
+const getSeverityOverrides = (): Map<string, DartAnalyzeLogTypeEnum> => {
   const input = getInputString('severity-overrides');
 
   const map = new Map<string, DartAnalyzeLogTypeEnum>();
@@ -117,7 +117,9 @@ export const getSeverityOverrides = (): Map<string, DartAnalyzeLogTypeEnum> => {
     const trimmed = entry.trim();
     if (!trimmed) continue;
 
-    const [key, value] = trimmed.split(':').map((part) => part.trim());
+    const [key, value] = trimmed
+      .split(':')
+      .map((part) => part.trim().toLocaleLowerCase());
     if (!key || !value) {
       throw new Error(
         `Invalid format for severity-overrides: "${entry}". Expected format: "key: value"`,

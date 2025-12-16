@@ -82,14 +82,20 @@ export class ParsedLine {
       if (this.type === DartAnalyzeLogTypeEnum.Error) {
         return true;
       }
-      if (this.actionOptions.failOn !== FailOnEnum.Error) {
-        if (this.type === DartAnalyzeLogTypeEnum.Warning) {
-          return true;
-        }
-        if (this.actionOptions.failOn !== FailOnEnum.Warning) {
-          // It is FailOn.Info
-          return true;
-        }
+      if (this.actionOptions.failOn === FailOnEnum.Error) {
+        return false;
+      }
+      if (this.type === DartAnalyzeLogTypeEnum.Warning) {
+        return true;
+      }
+      if (this.actionOptions.failOn === FailOnEnum.Warning) {
+        return false;
+      }
+      if (this.type === DartAnalyzeLogTypeEnum.Info) {
+        return true;
+      }
+      if (this.actionOptions.failOn === FailOnEnum.Info) {
+        return false;
       }
     }
     return false;

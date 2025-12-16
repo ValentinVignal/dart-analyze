@@ -24,9 +24,10 @@ export class FormatResult {
 
   public get commentBody(): string {
     const comments: string[] = [];
+    const highlight = this.success ? '' : '**';
     for (const file of this.files) {
       comments.push(
-        `- ${this.actionOptions.emojis ? ':poop: ' : ''} \`${file}\` is not formatted.`,
+        `- ${this.actionOptions.emojis ? ':poop: ' : ''} ${highlight}\`${file}\` is not formatted.${highlight}`,
       );
     }
     return comments.join('\n');

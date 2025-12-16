@@ -86,6 +86,7 @@ export class Result {
       }),
     ];
     if (
+      this.analyze.counts.notes ||
       [...this.actionOptions.severityOverrides.values()].some(
         (value) => value === DartAnalyzeLogTypeEnum.Note,
       )
@@ -173,7 +174,7 @@ export class Result {
       params.emojis && this.format.count && this.actionOptions.failOnFormat
         ? '**'
         : '';
-    return `- ${params.emojis && this.actionOptions.emojis ? emoji : ''}${highlight}${this.format.count} formatting issue${Result.pluralS(this.format.count)}${highlight}`;
+    return `- ${params.emojis && this.actionOptions.emojis ? emoji : ''}${highlight}${this.format.count} formatting issue${Result.pluralS(this.format.count)}.${highlight}`;
   }
 
   /**

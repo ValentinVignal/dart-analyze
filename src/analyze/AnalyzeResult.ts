@@ -38,7 +38,7 @@ class AnalyzeResultCounts {
    * The total number of logs
    */
   public get total(): number {
-    return this.info + this.warnings + this.errors;
+    return this.info + this.warnings + this.errors + this.notes;
   }
 
   public get failCount(): number {
@@ -49,6 +49,9 @@ class AnalyzeResultCounts {
         count += this.warnings;
         if (this.actionOptions.failOn !== FailOnEnum.Warning) {
           count += this.info;
+          if (this.actionOptions.failOn !== FailOnEnum.Info) {
+            count += this.notes;
+          }
         }
       }
     }
