@@ -1,5 +1,14 @@
 # dart-analyze
 
+## 0.4.0
+
+### Minor Changes
+
+- b9f2565: - Add severity-overrides parameter
+  - Add fail-on-format parameter
+  - Remove FailOn.Format
+  - Add FailOn.Note
+
 ## 0.3.2
 
 ### Patch Changes
