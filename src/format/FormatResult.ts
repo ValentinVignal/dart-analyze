@@ -1,5 +1,4 @@
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
-import { FailOnEnum } from '../utils/FailOn.js';
 
 export interface FormatResultInterface {
   files: Set<string>;
@@ -16,7 +15,7 @@ export class FormatResult {
   }
 
   public get success(): boolean {
-    return this.actionOptions.failOn !== FailOnEnum.Format || !this.files.size;
+    return !this.actionOptions.failOnFormat || !this.files.size;
   }
 
   public get count(): number {

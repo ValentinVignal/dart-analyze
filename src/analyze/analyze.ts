@@ -1,6 +1,6 @@
 import * as exec from '@actions/exec';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
-import { ModifiedFile, ModifiedFiles } from '../utils/ModifiedFiles.js';
+import { ModifiedFiles } from '../utils/ModifiedFiles.js';
 import { AnalyzeResult, type AnalyzeResultLine } from './AnalyzeResult.js';
 import {
   DartAnalyzeLogType,
@@ -55,6 +55,7 @@ export async function analyze(params: {
   let errorCount = 0;
   let warningCount = 0;
   let infoCount = 0;
+  let noteCount = 0;
 
   const parsedLines: AnalyzeResultLine[] = [];
 
@@ -101,8 +102,11 @@ export async function analyze(params: {
         case DartAnalyzeLogTypeEnum.Warning:
           warningCount++;
           break;
-        default:
+        case DartAnalyzeLogTypeEnum.Info:
           infoCount++;
+          break;
+        case DartAnalyzeLogTypeEnum.Note:
+          noteCount++;
           break;
       }
       console.log(
@@ -117,6 +121,7 @@ export async function analyze(params: {
   return new AnalyzeResult(
     {
       counts: {
+        notes: noteCount,
         info: infoCount,
         warnings: warningCount,
         errors: errorCount,
