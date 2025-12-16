@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import path from 'path';
-import { ModifiedFiles } from './ModifiedFiles.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionOptionsSafe } from './ActionOptions.js';
+import { ModifiedFiles } from './ModifiedFiles.js';
 
 vi.mock('@actions/core');
 vi.mock('@actions/github');
@@ -12,6 +12,7 @@ vi.mock('path');
 describe('ModifiedFiles', () => {
   const mockActionOptions: ActionOptionsSafe = {
     failOn: 0,
+    failOnFormat: true,
     workingDirectory: '/test/workspace',
     token: 'test-token',
     checkRenamedFiles: false,
@@ -20,6 +21,7 @@ describe('ModifiedFiles', () => {
     lineLength: 80,
     formatLines: undefined,
     analyzerLines: undefined,
+    severityOverrides: new Map<string, number>(),
   };
 
   const mockGithubFiles = [

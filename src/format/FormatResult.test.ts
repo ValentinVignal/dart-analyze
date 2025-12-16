@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { FormatResult } from './FormatResult.js';
-import { FailOnEnum } from '../utils/FailOn.js';
+import { describe, expect, it } from 'vitest';
 import type { ActionOptionsSafe } from '../utils/ActionOptions.js';
+import { FailOnEnum } from '../utils/FailOn.js';
+import { FormatResult } from './FormatResult.js';
 
 describe('FormatResult', () => {
   describe('constructor', () => {
@@ -29,14 +29,14 @@ describe('FormatResult', () => {
     });
 
     it('should return true when failOn is Format but no files', () => {
-      const actionOptions = { failOn: FailOnEnum.Format } as ActionOptionsSafe;
+      const actionOptions = { failOnFormat: true } as ActionOptionsSafe;
       const result = new FormatResult(actionOptions);
 
       expect(result.success).toBe(true);
     });
 
     it('should return false when failOn is Format and there are files', () => {
-      const actionOptions = { failOn: FailOnEnum.Format } as ActionOptionsSafe;
+      const actionOptions = { failOnFormat: true } as ActionOptionsSafe;
       const files = new Set(['file1.dart', 'file2.dart']);
       const result = new FormatResult(actionOptions, { files });
 
@@ -147,27 +147,6 @@ describe('FormatResult', () => {
   });
 
   describe('integration tests', () => {
-    it('should work correctly with all FailOnEnum values', () => {
-      const files = new Set(['test.dart']);
-
-      // Test all FailOnEnum values
-      Object.values(FailOnEnum).forEach((failOn) => {
-        if (typeof failOn === 'number') {
-          const actionOptions = { failOn, emojis: true } as ActionOptionsSafe;
-          const result = new FormatResult(actionOptions, { files });
-
-          expect(result.count).toBe(1);
-          expect(result.commentBody).toContain('test.dart');
-
-          if (failOn === FailOnEnum.Format) {
-            expect(result.success).toBe(false);
-          } else {
-            expect(result.success).toBe(true);
-          }
-        }
-      });
-    });
-
     it('should handle complex file paths in comments', () => {
       const actionOptions = {
         failOn: FailOnEnum.Warning,

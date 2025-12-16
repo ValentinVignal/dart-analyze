@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { FailOnEnum } from '../utils/FailOn.js';
 import {
   DartAnalyzeLogType,
   DartAnalyzeLogTypeEnum,
 } from './DartAnalyzeLogType.js';
 
-const mockOptions = (failOn: number) => ({ failOn }) as any;
+const mockOptions = (failOn: FailOnEnum) => ({ failOn }) as any;
 
 describe('DartAnalyzeLogType', () => {
   it('typeFromKey returns correct enum', () => {
@@ -30,7 +31,10 @@ describe('DartAnalyzeLogType', () => {
       'WARNING',
     );
     expect(DartAnalyzeLogType.keyFromType(DartAnalyzeLogTypeEnum.Info)).toBe(
-      'WARNING',
+      'NOTICE',
+    );
+    expect(DartAnalyzeLogType.keyFromType(DartAnalyzeLogTypeEnum.Note)).toBe(
+      'NOTICE',
     );
   });
 
@@ -44,32 +48,135 @@ describe('DartAnalyzeLogType', () => {
     expect(DartAnalyzeLogType.typeToString(DartAnalyzeLogTypeEnum.Info)).toBe(
       'Info',
     );
+    expect(DartAnalyzeLogType.typeToString(DartAnalyzeLogTypeEnum.Note)).toBe(
+      'Note',
+    );
   });
 
   it('isFail returns correct value for each failOn', () => {
     expect(
-      DartAnalyzeLogType.isFail(mockOptions(4), DartAnalyzeLogTypeEnum.Error),
-    ).toBe(false); // Nothing
-    expect(
-      DartAnalyzeLogType.isFail(mockOptions(3), DartAnalyzeLogTypeEnum.Error),
-    ).toBe(false); // Format
-    expect(
-      DartAnalyzeLogType.isFail(mockOptions(2), DartAnalyzeLogTypeEnum.Error),
-    ).toBe(true); // Info
-    expect(
-      DartAnalyzeLogType.isFail(mockOptions(1), DartAnalyzeLogTypeEnum.Error),
-    ).toBe(true); // Warning
-    expect(
-      DartAnalyzeLogType.isFail(mockOptions(1), DartAnalyzeLogTypeEnum.Warning),
-    ).toBe(true);
-    expect(
-      DartAnalyzeLogType.isFail(mockOptions(1), DartAnalyzeLogTypeEnum.Info),
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Nothing),
+        DartAnalyzeLogTypeEnum.Error,
+      ),
     ).toBe(false);
     expect(
-      DartAnalyzeLogType.isFail(mockOptions(0), DartAnalyzeLogTypeEnum.Error),
-    ).toBe(true); // Error
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Note),
+        DartAnalyzeLogTypeEnum.Error,
+      ),
+    ).toBe(true);
     expect(
-      DartAnalyzeLogType.isFail(mockOptions(0), DartAnalyzeLogTypeEnum.Warning),
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Info),
+        DartAnalyzeLogTypeEnum.Error,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Warning),
+        DartAnalyzeLogTypeEnum.Error,
+      ),
+    ).toBe(true);
+
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Error),
+        DartAnalyzeLogTypeEnum.Error,
+      ),
+    ).toBe(true);
+
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Nothing),
+        DartAnalyzeLogTypeEnum.Warning,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Note),
+        DartAnalyzeLogTypeEnum.Warning,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Info),
+        DartAnalyzeLogTypeEnum.Warning,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Warning),
+        DartAnalyzeLogTypeEnum.Warning,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Error),
+        DartAnalyzeLogTypeEnum.Warning,
+      ),
+    ).toBe(false);
+
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Nothing),
+        DartAnalyzeLogTypeEnum.Info,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Note),
+        DartAnalyzeLogTypeEnum.Info,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Info),
+        DartAnalyzeLogTypeEnum.Info,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Warning),
+        DartAnalyzeLogTypeEnum.Info,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Error),
+        DartAnalyzeLogTypeEnum.Info,
+      ),
+    ).toBe(false);
+
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Nothing),
+        DartAnalyzeLogTypeEnum.Note,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Note),
+        DartAnalyzeLogTypeEnum.Note,
+      ),
+    ).toBe(true);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Info),
+        DartAnalyzeLogTypeEnum.Note,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Warning),
+        DartAnalyzeLogTypeEnum.Note,
+      ),
+    ).toBe(false);
+    expect(
+      DartAnalyzeLogType.isFail(
+        mockOptions(FailOnEnum.Error),
+        DartAnalyzeLogTypeEnum.Note,
+      ),
     ).toBe(false);
   });
 });

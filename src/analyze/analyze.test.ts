@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModifiedFile, ModifiedFiles } from '../utils/ModifiedFiles.js';
 import { analyze } from './analyze.js';
 import { DartAnalyzeLogTypeEnum } from './DartAnalyzeLogType.js';
-import type { ModifiedFile, ModifiedFiles } from '../utils/ModifiedFiles.js';
 
 const fakeActionOptions = {
   workingDirectory: '/repo',
@@ -90,5 +90,34 @@ describe('analyze', () => {
       actionOptions,
     });
     expect(result.lines.length).toBe(0);
+  });
+
+  it('parses analyzerLines and returns AnalyzeResult accordingly to the severity overrides', async () => {
+    const lines = [
+      'ERROR|LINT|PREFER_CONST_CONSTRUCTORS|/repo/lib/main.dart|96|13|80|Prefer const with constant constructors.',
+      'WARNING|LINT|AVOID_PRINT|/repo/lib/foo.dart|10|2|10|Avoid print calls.',
+      'INFO|LINT|UNUSED_IMPORT|/repo/lib/bar.dart|5|1|5|Unused import.',
+    ];
+    const actionOptions = {
+      ...fakeActionOptions,
+      analyzerLines: lines,
+      severityOverrides: new Map([
+        ['prefer_const_constructors', DartAnalyzeLogTypeEnum.Note],
+        ['avoid_print', DartAnalyzeLogTypeEnum.Info],
+        ['unused_import', DartAnalyzeLogTypeEnum.Warning],
+      ]),
+    };
+    const result = await analyze({
+      modifiedFiles: fakeModifiedFiles as ModifiedFiles,
+      actionOptions,
+    });
+    expect(result.counts.errors).toBe(0);
+    expect(result.counts.warnings).toBe(1);
+    expect(result.counts.info).toBe(1);
+    expect(result.counts.notes).toBe(1);
+    expect(result.lines.length).toBe(3);
+    expect(result.lines?.[0]?.line.type).toBe(DartAnalyzeLogTypeEnum.Note);
+    expect(result.lines?.[1]?.line.type).toBe(DartAnalyzeLogTypeEnum.Info);
+    expect(result.lines?.[2]?.line.type).toBe(DartAnalyzeLogTypeEnum.Warning);
   });
 });
