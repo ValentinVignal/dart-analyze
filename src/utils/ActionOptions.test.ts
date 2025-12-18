@@ -140,4 +140,25 @@ rule4: note`;
       ]),
     );
   });
+
+  it('should set comment on success to true by default', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'warning';
+    process.env.GITHUB_WORKSPACE = '/ws';
+
+    const result = applyDefaults();
+
+    expect(result.commentOnSuccess).toBe(true);
+  });
+
+  it('should use the environment variable for commentOnSuccess', () => {
+    process.env.INPUT_TOKEN = 'abc';
+    process.env.INPUT_FAIL_ON = 'warning';
+    process.env.GITHUB_WORKSPACE = '/ws';
+    process.env.INPUT_COMMENT_ON_SUCCESS = 'false';
+
+    const result = applyDefaults();
+
+    expect(result.commentOnSuccess).toBe(false);
+  });
 });

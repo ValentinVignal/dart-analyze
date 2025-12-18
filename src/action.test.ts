@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { run } from './action.js';
+import { DartAnalyzeLogTypeEnum } from './analyze/DartAnalyzeLogType.js';
 import type { DeepPartial } from './utils/types.js';
 
 vi.mock('@actions/github');
@@ -269,13 +270,13 @@ describe('run', () => {
         '::endgroup::',
       ].map((s) => [s]),
     );
-    expect(core.setFailed).not.toHaveBeenCalledWith([
+    expect(core.setFailed).toHaveBeenCalledWith(
       `Dart Analyzer found 13 issues
 - 4 errors.
 - 4 warnings.
 - 4 info logs.
-- 1 formatting issue`,
-    ]);
+- 1 formatting issue.`,
+    );
   });
 
   it('should support when the analysis logs contain __w', async () => {
@@ -514,13 +515,13 @@ describe('run', () => {
         '::endgroup::',
       ].map((s) => [s]),
     );
-    expect(core.setFailed).not.toHaveBeenCalledWith([
+    expect(core.setFailed).toHaveBeenCalledWith(
       `Dart Analyzer found 13 issues
 - 4 errors.
 - 4 warnings.
 - 4 info logs.
-- 1 formatting issue`,
-    ]);
+- 1 formatting issue.`,
+    );
   });
 
   it('should run the action with severity overrides', async () => {
@@ -765,12 +766,164 @@ ERROR_CODE_18: note`;
         '::endgroup::',
       ].map((s) => [s]),
     );
-    expect(core.setFailed).not.toHaveBeenCalledWith([
+    expect(core.setFailed).toHaveBeenCalledWith(
       `Dart Analyzer found 13 issues
 - 4 errors.
 - 4 warnings.
-- 4 info logs.
-- 1 formatting issue`,
-    ]);
+- 2 info logs.
+- 2 note logs.
+- 1 formatting issue.`,
+    );
+  });
+
+  it('should run the action with a severity overrides and only 1 non failing log being overridden', async () => {
+    const workingDirectory = '/home/runner/work/repository/repository';
+    process.env.GITHUB_WORKSPACE = workingDirectory;
+
+    // Mock the Github API.
+    vi.mocked(github.context).eventName = 'pull_request';
+    vi.mocked(github.context).payload = {
+      pull_request: {
+        number: 123,
+        base: { sha: 'base-sha' },
+        head: { sha: 'head-sha' },
+      },
+    } as unknown as WebhookPayload;
+    vi.spyOn(github.context, 'repo', 'get').mockReturnValue({
+      owner: 'test-owner',
+      repo: 'test-repo',
+    });
+
+    const octokit: DeepPartial<InstanceType<typeof GitHub>> = {
+      rest: {
+        repos: {
+          compareCommitsWithBasehead: vi.fn().mockResolvedValue({
+            status: 200,
+            data: {
+              files: [
+                {
+                  filename: 'lib/file1.dart',
+                  patch: `
+@@ -1,4 +1,6 @@
+ import 'package:flutter/material.dart';
+
+-void main() => runApp(MyApp());
++void main() {
++  runApp(MyApp());
++}
+                  `,
+                },
+              ],
+            },
+          }) as any,
+        },
+        issues: {
+          listComments: vi.fn().mockResolvedValue({
+            data: [],
+          }) as any,
+          createComment: vi.fn().mockResolvedValue({}) as any,
+        },
+      },
+    };
+
+    vi.mocked(github.getOctokit).mockReturnValue(
+      octokit as InstanceType<typeof GitHub>,
+    );
+
+    // Mock the read of the yaml file.
+    vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
+    vi.mocked(path.resolve).mockReturnValueOnce(workingDirectory);
+    vi.mocked(path.resolve).mockReturnValueOnce(
+      'path/to/analysis_options.yaml',
+    );
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('');
+
+    // Mock the exec.exec function.
+    vi.mocked(exec.exec).mockImplementationOnce(
+      async (command, args, options) => {
+        const lines = [
+          'INFO|LINT|ERROR_CODE_0|lib/file1.dart|1|1|1|Info message for file 1, hunk 1.', // Included.
+        ];
+
+        for (const line of lines) {
+          options!.listeners!.stdout!(Buffer.from(line + '\n'));
+        }
+        return 0;
+      },
+    );
+    vi.mocked(exec.exec).mockImplementationOnce(
+      async (command, args, options) => {
+        const lines = ['Formatted 1 files (0 changed) in 0.1s'];
+
+        for (const line of lines) {
+          options!.listeners!.stdout!(Buffer.from(line + '\n'));
+        }
+        return 0;
+      },
+    );
+
+    await run({
+      token: 'token',
+      severityOverrides: new Map([
+        ['error_code_0', DartAnalyzeLogTypeEnum.Note],
+      ]),
+    });
+
+    expect(
+      octokit.rest?.repos?.compareCommitsWithBasehead,
+    ).toHaveBeenCalledExactlyOnceWith({
+      basehead: 'base-sha...head-sha',
+      owner: 'test-owner',
+      repo: 'test-repo',
+    });
+    expect(exec.exec).toHaveBeenCalledWith(
+      'dart analyze --format machine',
+      [workingDirectory],
+      expect.anything(),
+    );
+    expect(exec.exec).toHaveBeenCalledWith(
+      'dart format',
+      ['-o', 'none', '.'],
+      expect.anything(),
+    );
+    expect(octokit.rest!.issues!.listComments).toHaveBeenCalledExactlyOnceWith({
+      owner: 'test-owner',
+      repo: 'test-repo',
+      issue_number: 123,
+    });
+    expect(octokit.rest!.issues!.createComment).toHaveBeenCalledExactlyOnceWith(
+      {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+        body: `<!-- dart-analyze -->
+:warning: Dart Analyzer found 1 issue
+- :white_check_mark: 0 error.
+- :tada: 0 warning.
+- :rocket: 0 info log.
+- :memo: 1 note log.
+- :art: 0 formatting issue.
+---
+- :memo: Note - \`lib/file1.dart\`:1:1 - Info message for file 1, hunk 1. (error_code_0). See [link](https://dart.dev/diagnostic/error_code_0) or [link](https://dart.dev/lints/error_code_0).`,
+      },
+    );
+    expect(vi.mocked(console.log).mock.calls).toEqual(
+      [
+        '::group:: Analyze dart code',
+        '::NOTICE file=lib/file1.dart,line=1,col=1::Info message for file 1, hunk 1. (error_code_0) See https://dart.dev/diagnostic/error_code_0 or https://dart.dev/lints/error_code_0',
+        '::endgroup::',
+        '::group:: Analyze formatting',
+        '::endgroup::',
+      ].map((s) => [s]),
+    );
+    expect(core.warning).toHaveBeenCalledWith(
+      `Dart Analyzer found 1 issue
+- 0 error.
+- 0 warning.
+- 0 info log.
+- 1 note log.
+- 0 formatting issue.`,
+    );
   });
 });

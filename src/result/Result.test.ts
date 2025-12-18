@@ -53,6 +53,7 @@ describe('Result', () => {
       workingDirectory: '.',
       token: 'token',
       severityOverrides: new Map<string, number>(),
+      commentOnSuccess: true,
     };
 
     analyze = createAnalyzeResultWithSuccess(true, actionOptions);
@@ -83,10 +84,107 @@ describe('Result', () => {
     expect(result.success).toBe(false);
   });
 
-  it('should call comment util with correct message', async () => {
-    const result = new Result({ analyze, format }, actionOptions);
-    await result.comment();
-    expect(commentMock).toHaveBeenCalled();
+  describe('comment', () => {
+    it('should call comment with an empty message if there are no issues', async () => {
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 0, warnings: 0, info: 0, notes: 0 },
+              lines: [],
+            },
+            actionOptions,
+          ),
+          format,
+        },
+        actionOptions,
+      );
+      await result.comment();
+      expect(commentMock).toHaveBeenCalledWith({}, actionOptions);
+    });
+
+    it('should call comment with the correct message if there are some issues', async () => {
+      const actionOptions = {
+        failOn: FailOnEnum.Warning,
+        severityOverrides: new Map<string, number>(),
+      } as ActionOptionsSafe;
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 1, warnings: 0, info: 0, notes: 0 },
+              lines: [],
+            },
+            actionOptions,
+          ),
+          format,
+        },
+        actionOptions,
+      );
+      await result.comment();
+      expect(commentMock).toHaveBeenCalledWith(
+        {
+          message: `Dart Analyzer found 1 issue
+- **1 error.**
+- 0 warning.
+- 0 info log.`,
+        },
+        actionOptions,
+      );
+    });
+    it('should call comment with a non empty message when there are non failing issues and commentOnSuccess is true', async () => {
+      const actionOptions = {
+        failOn: FailOnEnum.Error,
+        severityOverrides: new Map<string, number>(),
+        commentOnSuccess: true,
+      } as ActionOptionsSafe;
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 0, warnings: 0, info: 0, notes: 1 },
+              lines: [],
+            },
+            actionOptions,
+          ),
+          format,
+        },
+        actionOptions,
+      );
+      await result.comment();
+      expect(commentMock).toHaveBeenCalledWith(
+        {
+          message: `Dart Analyzer found 1 issue
+- 0 error.
+- 0 warning.
+- 0 info log.
+- 1 note log.`,
+        },
+        actionOptions,
+      );
+    });
+    it('should call comment with an empty message when there are non failing issues and commentOnSuccess is false', async () => {
+      const actionOptions = {
+        failOn: FailOnEnum.Error,
+        severityOverrides: new Map<string, number>(),
+        commentOnSuccess: false,
+      } as ActionOptionsSafe;
+      const result = new Result(
+        {
+          analyze: new AnalyzeResult(
+            {
+              counts: { errors: 0, warnings: 0, info: 0, notes: 1 },
+              lines: [],
+            },
+            actionOptions,
+          ),
+          format,
+        },
+        actionOptions,
+      );
+      await result.comment();
+      expect(commentMock).toHaveBeenCalledWith({}, actionOptions);
+    });
   });
 
   it('should log info if success and no issues', () => {

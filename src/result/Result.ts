@@ -42,12 +42,23 @@ export class Result {
   }
 
   /**
+   * Whether there are any issues (analyze or format). Those issues can be
+   * non-failing.
+   */
+  private get hasIssues(): boolean {
+    return this.analyze.hasWarning || this.format.hasIssues;
+  }
+
+  /**
    * Put a comment on the PR
    */
   public async comment(): Promise<void> {
     const messages: string[] = [this.issueCountMessage({ emojis: true })];
 
-    if (this.success) {
+    if (
+      this.success &&
+      (!this.hasIssues || !this.actionOptions.commentOnSuccess)
+    ) {
       await comment({}, this.actionOptions);
     } else {
       const analyzeBody = this.analyze.commentBody;
