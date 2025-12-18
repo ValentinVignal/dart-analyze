@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.5.1
+
+### Patch Changes
+
+- d8ddd4b: Export DartAnalyzeLogTypeEnum
+
 ## 0.5.0
 
 ### Minor Changes
