@@ -22,6 +22,7 @@ describe('ModifiedFiles', () => {
     formatLines: undefined,
     analyzerLines: undefined,
     severityOverrides: new Map<string, number>(),
+    commentOnSuccess: true,
   };
 
   const mockGithubFiles = [

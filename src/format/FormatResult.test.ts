@@ -77,6 +77,23 @@ describe('FormatResult', () => {
     });
   });
 
+  describe('hasIssues getter', () => {
+    it('should return false when there are no issues', () => {
+      const actionOptions = {} as ActionOptionsSafe;
+      const result = new FormatResult(actionOptions);
+
+      expect(result.hasIssues).toBe(false);
+    });
+
+    it('should return true when there are issues', () => {
+      const actionOptions = {} as ActionOptionsSafe;
+      const files = new Set(['file1.dart', 'file2.dart', 'file3.dart']);
+      const result = new FormatResult(actionOptions, { files });
+
+      expect(result.hasIssues).toBe(true);
+    });
+  });
+
   describe('commentBody getter', () => {
     it('should return empty string for empty files set', () => {
       const actionOptions = {} as ActionOptionsSafe;
