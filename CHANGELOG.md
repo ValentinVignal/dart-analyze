@@ -1,5 +1,11 @@
 # dart-analyze
 
+## 0.5.0
+
+### Minor Changes
+
+- 13658a8: Add commentOnSuccess parameter
+
 ## 0.4.0
 
 ### Minor Changes
