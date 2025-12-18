@@ -85,6 +85,13 @@ export type ActionOptionsSafe = {
    *
    */
   severityOverrides: Map<string, DartAnalyzeLogTypeEnum>;
+
+  /**
+   * Whether to comment on successful runs that have some non-failing logs
+   *
+   * Default is `true`.
+   */
+  commentOnSuccess: boolean;
 };
 
 /**
@@ -166,5 +173,8 @@ export const applyDefaults = (options?: ActionOptions): ActionOptionsSafe => {
     formatLines:
       options?.formatLines ?? getInputMultilineString('format-lines'),
     severityOverrides: options?.severityOverrides ?? getSeverityOverrides(),
+    commentOnSuccess:
+      options?.commentOnSuccess ??
+      (getInputString('comment-on-success') || 'true') === 'true',
   };
 };

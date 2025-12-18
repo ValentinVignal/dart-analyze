@@ -18,6 +18,13 @@ export class FormatResult {
     return !this.actionOptions.failOnFormat || !this.files.size;
   }
 
+  /**
+   * Whether there are any format issues (even non-failing ones).
+   */
+  public get hasIssues(): boolean {
+    return this.count > 0;
+  }
+
   public get count(): number {
     return this.files.size;
   }
